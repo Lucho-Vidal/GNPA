@@ -419,7 +419,9 @@ import { AxiosError } from "axios";
 import { createRegistro } from "../../services/registrosService";
 import { Registro } from "../../interfaces/IRegistro";
 import { ITurno } from "../../interfaces/ITurno";
-import { filtrarPorTurno, loadTurnos, itinerarioType, dia_laboral } from '../../utils/funciones';
+import { loadTurnos, itinerarioType } from '../../utils/funciones';
+import { dia_laboral } from "../../utils/personal";
+import { filtrarPorTurno } from "../../utils/turnos";
 
 export default defineComponent({
     data() {
@@ -756,7 +758,7 @@ export default defineComponent({
             if(personalEncontrado.turno.toLowerCase().includes('ciclo')){
                 //TODO cuando se desarrolle servicio irregular
             }else{
-                const turnos = filtrarPorTurno(
+                const turnos: ITurno[] = filtrarPorTurno(
                     itinerario,
                     this.lstTurnos,
                     ["Jul24"],// provisorio
@@ -775,8 +777,7 @@ export default defineComponent({
                 }
                 
                 if (turnos.length > 1) {
-                    turno = turnos.find(turno => turno.turno === `${personalEncontrado.turno}.${jornada}`) || turno;
-                    
+                    turno = turnos.find( (turno: ITurno) => turno.turno === `${personalEncontrado.turno}.${jornada}`) || turno;
                 }
 
                 this.cambioTurno.personal[index].turnoEfectivo = turno.turno;

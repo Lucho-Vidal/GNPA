@@ -372,11 +372,13 @@ import { defineComponent } from "vue";
 import { IPersonal } from "../../interfaces/IPersonal";
 import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
-import { dia_laboral, guardarRegistro, itinerarioType, loadPersonales, loadTurnos } from '../../utils/funciones';
+import { guardarRegistro, itinerarioType, loadPersonales, loadTurnos } from '../../utils/funciones';
 import { Ordenamiento } from "../../interfaces/IOrdenamientos";
 import { Itinerario } from "../../interfaces/Itinerario";
 import { createOrdenamiento } from '../../services/ordenamientoService';
 import { ITurno } from '../../interfaces/ITurno';
+import { dia_laboral } from "../../utils/personal";
+import { defaultTurnos } from "../../utils/interfacesDefault";
 
 export default defineComponent({
     data() {
@@ -531,41 +533,20 @@ export default defineComponent({
             );
             if (this.personalEncontrado) {
                 // this.validaPersonalConNovedadActiva(this.personalEncontrado[0]);
-                this.ordenamiento.personal.apellido =
-                    this.personalEncontrado.apellido;
-                this.ordenamiento.personal.nombres =
-                    this.personalEncontrado.nombres;
-                this.ordenamiento.personal.dotacion =
-                    this.personalEncontrado.dotacion;
-                this.ordenamiento.personal.especialidad =
-                    this.personalEncontrado.especialidad;
-                this.ordenamiento.personal.turno =
-                    this.personalEncontrado.turno;
-                this.ordenamiento.personal.franco =
-                    this.personalEncontrado.franco;
-                    this.ordenamiento.fecha = this.today
-                        .toISOString()
-                        .split("T")[0];
+                this.ordenamiento.personal.apellido = this.personalEncontrado.apellido;
+                this.ordenamiento.personal.nombres = this.personalEncontrado.nombres;
+                this.ordenamiento.personal.dotacion = this.personalEncontrado.dotacion;
+                this.ordenamiento.personal.especialidad = this.personalEncontrado.especialidad;
+                this.ordenamiento.personal.turno = this.personalEncontrado.turno;
+                this.ordenamiento.personal.franco = this.personalEncontrado.franco;
+                this.ordenamiento.fecha = this.today.toISOString().split("T")[0];
             }
             this.turnosEncontrado = this.buscarTurno(this.personalEncontrado.turno,this.personalEncontrado.franco,this.today,this.turnos)
         },
         buscarTurno(turnoABuscar:string,franco:number,fecha:Date,turnos:ITurno[]){
             const diaLaboral = dia_laboral(franco,fecha.getDay());
             this.esDiagramado = false;
-            let encontrados: ITurno = {
-                _id: "",
-                turno: "",
-                itinerario: "",
-                circular: "",
-                personal: "",
-                toma: "",
-                deja: "",
-                dotacion: "",
-                especialidad: "",
-                ordenes: false,
-                viewDetail: false,
-                vueltas: [],
-            };
+            let encontrados: ITurno = defaultTurnos();
             // let titular: IPersonal;
             // let diagrama: ITurno;
             let turnosEncontrados = turnos.filter((turno)=> turno.turno.includes(turnoABuscar));
@@ -592,7 +573,7 @@ export default defineComponent({
             this.ordenamiento.turno.vueltas = [...this.ordenamiento.turno.vueltas,
                 {
                     vuelta: 0,
-                    tren: 0,
+                    tren: "",
                     refer:'',
                     origen:'',
                     sale:'',

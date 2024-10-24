@@ -416,12 +416,7 @@
             </table>
             <div>
                 <button class="btn btn-primary col-1 m-2">Guardar</button>
-                <button
-                    class="btn btn-secondary col-1 m-2"
-                    @click="goBack"
-                >
-                    Cerrar
-                </button>
+                <button class="btn btn-secondary col-1 m-2" @click="goBack">Cerrar</button>
             </div>
         </form>
     </main>
@@ -580,10 +575,10 @@ export default defineComponent({
                 if(this.novedad.turno.toLowerCase().includes('ciclo')){
                     //TODO guarda en la tarjeta correspondiente
                     
-                    console.error('TODO guardar en la tarjeta correspondiente');
+                    console.log('TODO guardar en la tarjeta correspondiente');
                 }
-                if(this.novedad.remplazo.length > 0){
-                    console.error('TODO guardar en la tarjeta correspondiente');
+                if(this.novedad?.remplazo.length > 0){
+                    console.log('TODO guardar en la tarjeta correspondiente');
                 }
 
                 // guardamos registro

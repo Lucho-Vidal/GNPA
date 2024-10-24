@@ -402,9 +402,9 @@ import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
 import { createRegistro } from "../../services/registrosService";
 import { Registro } from "../../interfaces/IRegistro";
-import { obtenerDotaciones } from "../../utils/funciones";
 import { IPersonalSinDiagrama } from "../../interfaces/IPersonalSinDiagrama";
 import { getPersonalesSinDiagrama } from "../../services/personalSinDiagramaService";
+import { obtenerDotaciones } from "../../utils/personal";
 
 export default defineComponent({
     // props: ['idPersonal', 'idDato', 'idVia'],

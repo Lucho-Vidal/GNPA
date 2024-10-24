@@ -18,7 +18,8 @@ import { getTarjetaPersonalSinDiagrama, getTarjetaPersonalSinDiagramaPorLegajoYM
 import { getTurnos } from "@/services/turnosService";
 import { AxiosError } from "axios";
 import * as XLSX from 'xlsx';
-
+import { esFechaIgual, esFechaMayorIgual } from "./fechas";
+/*
 // Validaciones:
 export function esFechaMayor(dateMayor: string, dateMenor: string) {
     if (dateMayor && dateMenor) {
@@ -78,7 +79,7 @@ export function compararHoras(hora1: string, hora2: string): number {
  * @param hora string con formato hora '--:--' - Parametro obligatorio
  * @param incrementarDia boolean por default false, si se pasa true suma un dia a la fecha que retorna
  * @returns Date | null, con la hora pasada por Parametro 
- */
+ *//*
 export function newDate(hora: string, incrementarDia: boolean = false): Date|null {
     const [horaN, minutosN] = hora.split(":").map(Number);
     let date = new Date();
@@ -123,7 +124,7 @@ export function newDate(hora: string, incrementarDia: boolean = false): Date|nul
  * @example
  * // Devuelve '' si la hora es inválida
  * diferenciaHoras('12:00', 'invalid'); // Devuelve ''
- */
+ *//*
 export function diferenciaHoras(hora1: string, hora2: string): string {
 
     // Crear las fechas
@@ -160,7 +161,7 @@ export function diferenciaHoras(hora1: string, hora2: string): string {
  *
  * @param {Record<string, any>} dias - Un objeto que representa los días.
  * @returns {Record<string, any>} El objeto original con las propiedades 'totalHoras' actualizadas.
- */
+ *//*
 export function calcularTotalHoras(dias: Record<string, any>): Record<string, any> {
     let totalMinutosAcumulados = 0; // Total acumulado de minutos
     let reiniciar = false; // Indicador para reiniciar el conteo
@@ -283,150 +284,150 @@ export function diaPosterior(fecha: string): string {
 
     // Devolver la nueva fecha en formato YYYY-MM-DD
     return `${newYear}-${newMonth}-${newDay}`;
-}
+}*/
 //--------------------------------------------------------------------------------------------------------------------------------------
 
-export function buscarPersonalACargo(fecha: Date,inputDate: string,turnosAImprimir: ITurno[],personales: IPersonal[],novedades: Novedad[],cambiosTurnos:CambioTurno[]) {
-    try {
-        turnosAImprimir.forEach((turno: ITurno) => {
-            const personal = filtroPersonal(turno.turno,fecha,personales);
+// export function buscarPersonalACargo(fecha: Date,inputDate: string,turnosAImprimir: ITurno[],personales: IPersonal[],novedades: Novedad[],cambiosTurnos:CambioTurno[]) {
+//     try {
+//         turnosAImprimir.forEach((turno: ITurno) => {
+//             const personal = filtroPersonal(turno.turno,fecha,personales);
 
-            novedades.forEach((novedad: Novedad) => {
-                const {
-                    legajo,
-                    fechaBaja,
-                    fechaAlta,
-                    HNA,
-                    novedadInactiva,
-                } = novedad;
-                if (
-                    legajo === personal.legajo &&
-                    !novedadInactiva &&
-                    ((HNA &&
-                        esFechaMayorIgual(
-                            inputDate,
-                            fechaBaja
-                        )) ||
-                        (esFechaMayorIgual(
-                            inputDate,
-                            fechaBaja
-                        ) &&
-                            esFechaMayorIgual(
-                                fechaAlta,
-                                inputDate
-                            )))
-                ) {
-                    personal.nombres = obtenerNombreConReemplazo(novedad,inputDate,cambiosTurnos);
-                }
-            });
+//             novedades.forEach((novedad: Novedad) => {
+//                 const {
+//                     legajo,
+//                     fechaBaja,
+//                     fechaAlta,
+//                     HNA,
+//                     novedadInactiva,
+//                 } = novedad;
+//                 if (
+//                     legajo === personal.legajo &&
+//                     !novedadInactiva &&
+//                     ((HNA &&
+//                         esFechaMayorIgual(
+//                             inputDate,
+//                             fechaBaja
+//                         )) ||
+//                         (esFechaMayorIgual(
+//                             inputDate,
+//                             fechaBaja
+//                         ) &&
+//                             esFechaMayorIgual(
+//                                 fechaAlta,
+//                                 inputDate
+//                             )))
+//                 ) {
+//                     personal.nombres = obtenerNombreConReemplazo(novedad,inputDate,cambiosTurnos);
+//                 }
+//             });
 
-            // Asignar personal al array turnosAImprimir
-            if (personal.nombres !== undefined) {
-                                const cambiado = buscarCambioTurno(cambiosTurnos,inputDate,personal.legajo)
-                if(cambiado){
-                    turno.personal = `${cambiado.apellido} ${cambiado.nombres}`
-                }else{
-                    turno.personal = personal.nombres;
-                }
-            }
-        });
-    } catch (error) {
-        console.error("Error en buscarPersonalACargo:", error);
-    }
-}
-export function obtenerNombreConReemplazo(novedad: Novedad, inputDate: string , cambiosTurnos: CambioTurno[]): string {
-    if (novedad.remplazo && novedad.remplazo.length > 0) {
-        // buscamos el primero que cumple con la fecha input sea mayorIgual inicio de relevo Y si existe finRelevo que sea mayorIgual a inputDate SINO la que no tenga fin de relevo
-        const remplazo = novedad.remplazo.find((remplazo: Remplazo) => {
-            return (
-                esFechaMayorIgual(
-                    inputDate,
-                    remplazo.inicioRelevo
-                ) &&
-                ((remplazo.finRelevo &&
-                    esFechaMayorIgual(
-                        remplazo.finRelevo,
-                        inputDate
-                    )) ||
-                    !remplazo.finRelevo)
-            );
-        });
-        if (remplazo) {
-            // vamos a verificar que no este cambiado de turno
-            if(remplazo.legajo == null) return ''
-            const cambiado = buscarCambioTurno(cambiosTurnos,inputDate,remplazo.legajo)
-            if(cambiado){
-                return `${cambiado.apellido} ${cambiado.nombres}`
-            }else{
+//             // Asignar personal al array turnosAImprimir
+//             if (personal.nombres !== undefined) {
+//                                 const cambiado = buscarCambioTurno(cambiosTurnos,inputDate,personal.legajo)
+//                 if(cambiado){
+//                     turno.personal = `${cambiado.apellido} ${cambiado.nombres}`
+//                 }else{
+//                     turno.personal = personal.nombres;
+//                 }
+//             }
+//         });
+//     } catch (error) {
+//         console.error("Error en buscarPersonalACargo:", error);
+//     }
+// }
+// export function obtenerNombreConReemplazo(novedad: Novedad, inputDate: string , cambiosTurnos: CambioTurno[]): string {
+//     if (novedad.remplazo && novedad.remplazo.length > 0) {
+//         // buscamos el primero que cumple con la fecha input sea mayorIgual inicio de relevo Y si existe finRelevo que sea mayorIgual a inputDate SINO la que no tenga fin de relevo
+//         const remplazo = novedad.remplazo.find((remplazo: Remplazo) => {
+//             return (
+//                 esFechaMayorIgual(
+//                     inputDate,
+//                     remplazo.inicioRelevo
+//                 ) &&
+//                 ((remplazo.finRelevo &&
+//                     esFechaMayorIgual(
+//                         remplazo.finRelevo,
+//                         inputDate
+//                     )) ||
+//                     !remplazo.finRelevo)
+//             );
+//         });
+//         if (remplazo) {
+//             // vamos a verificar que no este cambiado de turno
+//             if(remplazo.legajo == null) return ''
+//             const cambiado = buscarCambioTurno(cambiosTurnos,inputDate,remplazo.legajo)
+//             if(cambiado){
+//                 return `${cambiado.apellido} ${cambiado.nombres}`
+//             }else{
             
-                return `${remplazo.apellido} ${remplazo.nombres}`;
-            }
-        } else {
-            return "Sin Cubrir";
-        }
-    } else {
-        return "Sin Cubrir";
-    }
-}
-export function filtrarPorTurno(itinerario: string,listaTurnos: ITurno[],circularSeleccionada: string[],turno: string):ITurno[] {
-    const turnos: ITurno[] = [];
-    listaTurnos.forEach((diag: ITurno) => {
-        if (
-            diag.turno.toLowerCase().includes(turno.toLowerCase()) &&
-            diag.itinerario == itinerario &&
-            circularSeleccionada.includes(diag.circular)
-        ) {
-            turnos.push(diag);
-        }
-    });
-    return turnos;
-}
-export function filtroTrenes(itinerario: string,listaTurnos: ITurno[],circularSeleccionada: string[],tren: string) {
-    /* Este método buscar y filtra en el array turno el tren que se desea buscar.
-    guarda en el array indFiltrado el resultado (los turnos que viajan en el tren). */
-    const turnosEnTren: ITurno[] = [];
-    listaTurnos.forEach((diag: ITurno) => {
-        for (let i = 0; i < diag.vueltas.length; i++) {
-            if (
-                diag.vueltas[i].tren === tren &&
-                diag.itinerario === itinerario &&
-                circularSeleccionada.includes(diag.circular)
-            ) {
-                turnosEnTren.push(diag);
-            }
-        }
-    });
-    return turnosEnTren;
-}
-export function filtroItinerario(itinerario: string,listaItinerario: Itinerario[],tren: number) {
-    /* Este método buscar en el array itinerario los horarios de pasadas por cada estación
-    las guarda en el array itFiltrado  */
-    const itFiltrados: Itinerario[] = listaItinerario.filter(
-        (it: Itinerario) => {
-            return it.tren === tren && it.itinerario == itinerario;
-        }
-    );
-    let horarios: Itinerario = {
-        id: null,
-        tren: 0,
-        itinerario: "",
-        estaciones: [],
-        horarios: [],
-    };
-    try {
-        if (itFiltrados !== undefined && itFiltrados.length === 1) {
-            horarios = itFiltrados[0];
-            if (horarios.tren % 2 == 0) {
-                horarios.estaciones.reverse();
-                horarios.horarios.reverse();
-            }
-            return horarios;
-        }
-    } catch (e) {
-        console.error(e);
-    }
-    return horarios;
-}
+//                 return `${remplazo.apellido} ${remplazo.nombres}`;
+//             }
+//         } else {
+//             return "Sin Cubrir";
+//         }
+//     } else {
+//         return "Sin Cubrir";
+//     }
+// }
+// export function filtrarPorTurno(itinerario: string,listaTurnos: ITurno[],circularSeleccionada: string[],turno: string):ITurno[] {
+//     const turnos: ITurno[] = [];
+//     listaTurnos.forEach((diag: ITurno) => {
+//         if (
+//             diag.turno.toLowerCase().includes(turno.toLowerCase()) &&
+//             diag.itinerario == itinerario &&
+//             circularSeleccionada.includes(diag.circular)
+//         ) {
+//             turnos.push(diag);
+//         }
+//     });
+//     return turnos;
+// }
+// export function filtroTrenes(itinerario: string,listaTurnos: ITurno[],circularSeleccionada: string[],tren: string) {
+//     /* Este método buscar y filtra en el array turno el tren que se desea buscar.
+//     guarda en el array indFiltrado el resultado (los turnos que viajan en el tren). */
+//     const turnosEnTren: ITurno[] = [];
+//     listaTurnos.forEach((diag: ITurno) => {
+//         for (let i = 0; i < diag.vueltas.length; i++) {
+//             if (
+//                 diag.vueltas[i].tren === tren &&
+//                 diag.itinerario === itinerario &&
+//                 circularSeleccionada.includes(diag.circular)
+//             ) {
+//                 turnosEnTren.push(diag);
+//             }
+//         }
+//     });
+//     return turnosEnTren;
+// }
+// export function filtroItinerario(itinerario: string,listaItinerario: Itinerario[],tren: number) {
+//     /* Este método buscar en el array itinerario los horarios de pasadas por cada estación
+//     las guarda en el array itFiltrado  */
+//     const itFiltrados: Itinerario[] = listaItinerario.filter(
+//         (it: Itinerario) => {
+//             return it.tren === tren && it.itinerario == itinerario;
+//         }
+//     );
+//     let horarios: Itinerario = {
+//         id: null,
+//         tren: 0,
+//         itinerario: "",
+//         estaciones: [],
+//         horarios: [],
+//     };
+//     try {
+//         if (itFiltrados !== undefined && itFiltrados.length === 1) {
+//             horarios = itFiltrados[0];
+//             if (horarios.tren % 2 == 0) {
+//                 horarios.estaciones.reverse();
+//                 horarios.horarios.reverse();
+//             }
+//             return horarios;
+//         }
+//     } catch (e) {
+//         console.error(e);
+//     }
+//     return horarios;
+// }
 /**
  * Filtra el personal según el turno y la fecha proporcionada.
  *
@@ -435,141 +436,141 @@ export function filtroItinerario(itinerario: string,listaItinerario: Itinerario[
  * @param personales - La lista de personal en la que se buscará.
  * @returns Un objeto con el turno, el legajo del personal encontrado, y una cadena con el nombre y apellido del personal (y su ayudante si existe).
  */
-export function filtroPersonal(turno: string, fecha: Date, personales: IPersonal[],) {
-    try {
-        let titular: IPersonal[];
+// export function filtroPersonal(turno: string, fecha: Date, personales: IPersonal[],) {
+//     try {
+//         let titular: IPersonal[];
 
-        turno = turno.trim().toLowerCase();
+//         turno = turno.trim().toLowerCase();
 
-        if (turno.includes("prog")) {
-            // Manejo especial si contiene 'prog'
-            titular = personales.filter(
-                (personal) => personal.turno && personal.turno.toLowerCase().includes("prog")
-            );
+//         if (turno.includes("prog")) {
+//             // Manejo especial si contiene 'prog'
+//             titular = personales.filter(
+//                 (personal) => personal.turno && personal.turno.toLowerCase().includes("prog")
+//             );
 
-        }else if (turno.indexOf(".") !== -1) {
-            // Caso general cuando el turno contiene un punto pero no contiene 'prog'
-            const indexPunto = turno.indexOf(".");
-            const diaLabStr = turno[indexPunto + 1];
-            const diaLab = Number(diaLabStr);
+//         }else if (turno.indexOf(".") !== -1) {
+//             // Caso general cuando el turno contiene un punto pero no contiene 'prog'
+//             const indexPunto = turno.indexOf(".");
+//             const diaLabStr = turno[indexPunto + 1];
+//             const diaLab = Number(diaLabStr);
             
-            // Verifica que `diaLab` sea un número válido antes de continuar
-            if (isNaN(diaLab)) {
-                throw new Error(`El valor después del punto no es un número válido: ${turno}`);
-            }
+//             // Verifica que `diaLab` sea un número válido antes de continuar
+//             if (isNaN(diaLab)) {
+//                 throw new Error(`El valor después del punto no es un número válido: ${turno}`);
+//             }
 
-            const diag = turno.split(".")[0];
-            const franco = dia_laboral(diaLab, fecha.getDay());
+//             const diag = turno.split(".")[0];
+//             const franco = dia_laboral(diaLab, fecha.getDay());
 
-            titular = personales.filter((personal) => {
-                return (
-                    personal.turno === diag &&
-                    Number(personal.franco) === franco
-                );
-            });
+//             titular = personales.filter((personal) => {
+//                 return (
+//                     personal.turno === diag &&
+//                     Number(personal.franco) === franco
+//                 );
+//             });
             
-        } else {
-            // Caso para turnos normales sin punto ni 'prog'
-            titular = personales.filter(
-                (personal) =>{
-                    if(personal.turno) 
-                    return personal.turno.toLowerCase() === turno.toLowerCase()
-                });
-        }
+//         } else {
+//             // Caso para turnos normales sin punto ni 'prog'
+//             titular = personales.filter(
+//                 (personal) =>{
+//                     if(personal.turno) 
+//                     return personal.turno.toLowerCase() === turno.toLowerCase()
+//                 });
+//         }
         
-        if (titular.length === 0) {
-            return {
-                turno: turno,
-                legajo: 0,
-                nombres: "",
-            };
-        }
+//         if (titular.length === 0) {
+//             return {
+//                 turno: turno,
+//                 legajo: 0,
+//                 nombres: "",
+//             };
+//         }
         
-        return {
-            turno: turno,
-            legajo: titular[0].legajo,
-            nombres: titular[1]
-                ? `${titular[0].apellido} ${titular[0].nombres} - Ayudante: ${titular[1].apellido} ${titular[1].nombres}`:
-                titular[0]
-                ? `${titular[0].apellido} ${titular[0].nombres}`
-                : "",
-        };
-    } catch (e) {
-        console.error(e);
-        return {
-            turno: "",
-            legajo: 0,
-            nombres: "",
-        };
-    }
-}
-export function dia_laboral(diaLaboral: number, hoy: number) {
-    /*   # devuelve el día de la semana como un número entero donde el Domingo 
-    está indexado como 0 y el Sábado como 6
-    Al ingresarle por parámetros la cantidad de días del turno pos franco y 
-    el dia de la semana actual devuelve el dia del franco del turno mismo. */
-    const diagrama = [
-        [0, 1, 2, 3, 4, 5, 6],
-        [6, 0, 1, 2, 3, 4, 5],
-        [5, 6, 0, 1, 2, 3, 4],
-        [4, 5, 6, 0, 1, 2, 3],
-        [3, 4, 5, 6, 0, 1, 2],
-        [2, 3, 4, 5, 6, 0, 1],
-        [1, 2, 3, 4, 5, 6, 0],
-    ];
-    return diagrama[diaLaboral][hoy]; //:franco
-}
-export function obtenerTiposCirculares(turnos: ITurno[]) {
-    // Filtramos aquellos turnos que tengan definida la propiedad "circular"
-    const turnosFiltrados = turnos.filter(
-        (turno) => turno.circular !== undefined
-    );
+//         return {
+//             turno: turno,
+//             legajo: titular[0].legajo,
+//             nombres: titular[1]
+//                 ? `${titular[0].apellido} ${titular[0].nombres} - Ayudante: ${titular[1].apellido} ${titular[1].nombres}`:
+//                 titular[0]
+//                 ? `${titular[0].apellido} ${titular[0].nombres}`
+//                 : "",
+//         };
+//     } catch (e) {
+//         console.error(e);
+//         return {
+//             turno: "",
+//             legajo: 0,
+//             nombres: "",
+//         };
+//     }
+// }
+// export function dia_laboral(diaLaboral: number, hoy: number) {
+//     /*   # devuelve el día de la semana como un número entero donde el Domingo 
+//     está indexado como 0 y el Sábado como 6
+//     Al ingresarle por parámetros la cantidad de días del turno pos franco y 
+//     el dia de la semana actual devuelve el dia del franco del turno mismo. */
+//     const diagrama = [
+//         [0, 1, 2, 3, 4, 5, 6],
+//         [6, 0, 1, 2, 3, 4, 5],
+//         [5, 6, 0, 1, 2, 3, 4],
+//         [4, 5, 6, 0, 1, 2, 3],
+//         [3, 4, 5, 6, 0, 1, 2],
+//         [2, 3, 4, 5, 6, 0, 1],
+//         [1, 2, 3, 4, 5, 6, 0],
+//     ];
+//     return diagrama[diaLaboral][hoy]; //:franco
+// }
+// export function obtenerTiposCirculares(turnos: ITurno[]) {
+//     // Filtramos aquellos turnos que tengan definida la propiedad "circular"
+//     const turnosFiltrados = turnos.filter(
+//         (turno) => turno.circular !== undefined
+//     );
 
-    // Usamos Set para obtener valores únicos de la propiedad "circular"
-    const circularesUnicas = [
-        ...new Set(turnosFiltrados.map((turno) => turno.circular)),
-    ];
+//     // Usamos Set para obtener valores únicos de la propiedad "circular"
+//     const circularesUnicas = [
+//         ...new Set(turnosFiltrados.map((turno) => turno.circular)),
+//     ];
 
-    return circularesUnicas;
-}
-export function obtenerDotaciones(personal: IPersonal[]) {
-    // Filtramos aquellos turnos que tengan definida la propiedad "dotacion"
-    const personalFiltrados = personal.filter(
-        (personal) => personal.dotacion !== undefined
-    );
+//     return circularesUnicas;
+// }
+// export function obtenerDotaciones(personal: IPersonal[]) {
+//     // Filtramos aquellos turnos que tengan definida la propiedad "dotacion"
+//     const personalFiltrados = personal.filter(
+//         (personal) => personal.dotacion !== undefined
+//     );
 
-    // Usamos Set para obtener valores únicos de la propiedad "circular"
-    const dotacionesUnicas = [
-        ...new Set(personalFiltrados.map((personal) => personal.dotacion)),
-    ];
+//     // Usamos Set para obtener valores únicos de la propiedad "circular"
+//     const dotacionesUnicas = [
+//         ...new Set(personalFiltrados.map((personal) => personal.dotacion)),
+//     ];
 
-    return dotacionesUnicas;
-}
-export function buscarCambioTurno(cambiosTurnos:CambioTurno[],inputDate:string,legajo: number){
+//     return dotacionesUnicas;
+// }
+// export function buscarCambioTurno(cambiosTurnos:CambioTurno[],inputDate:string,legajo: number){
     
-    let i = 0
-    let cambiado
-    let condition = true;
-    while ( i < cambiosTurnos.length && condition ){
-        if(
-            esFechaIgual(cambiosTurnos[i].fechaCambio,inputDate) &&
-            cambiosTurnos[i].personal[0].legajo ===  legajo
-        ){  
-            cambiado = cambiosTurnos[i].personal[1] 
-            condition = false
-        }else if(
-            esFechaIgual(cambiosTurnos[i].fechaCambio,inputDate) &&
-            cambiosTurnos[i].personal[1].legajo === legajo
-        ){
-            cambiado = cambiosTurnos[i].personal[0];
-            condition = false
-            console.log(cambiado);
+//     let i = 0
+//     let cambiado
+//     let condition = true;
+//     while ( i < cambiosTurnos.length && condition ){
+//         if(
+//             esFechaIgual(cambiosTurnos[i].fechaCambio,inputDate) &&
+//             cambiosTurnos[i].personal[0].legajo ===  legajo
+//         ){  
+//             cambiado = cambiosTurnos[i].personal[1] 
+//             condition = false
+//         }else if(
+//             esFechaIgual(cambiosTurnos[i].fechaCambio,inputDate) &&
+//             cambiosTurnos[i].personal[1].legajo === legajo
+//         ){
+//             cambiado = cambiosTurnos[i].personal[0];
+//             condition = false
+//             console.log(cambiado);
 
-        }
-        i++
-    }
-    return cambiado
-}
+//         }
+//         i++
+//     }
+//     return cambiado
+// }
 export function handleRequestError(error: AxiosError) {
     console.error("Error en la solicitud:", error);
 
@@ -670,126 +671,160 @@ export async function  loadNovedades() {
         handleRequestError(error as AxiosError);
     }
 }
-export function defaultPersonal(): IPersonal {
-    return {
-        _id: '',
-        legajo: 0,
-        apellido: '',
-        nombres: '',
-        turno: '',
-        franco: 0,
-        especialidad: '',
-        dotacion: '',
-        observaciones: '',
-        orden: 0,
-        conocimientos: {
-            CML: false,
-            CKD: false,
-            RO: false,
-            MPN: false,
-            OL: false,
-            LCI: false,
-            ELEC: false,
-            DUAL: false,
-        },
-        viewDetail: false,
-    };
-}
-export function defaultTurnos(): ITurno {
-    return {
-        _id: '',
-        turno: '',
-        itinerario: '',
-        circular: '',
-        personal: '',
-        toma: '',
-        deja: '',
-        dotacion: '',
-        especialidad: '',
-        ordenes: false,
-        viewDetail: false,
-        vueltas: [{} as Vueltas],
-    }
-}
-export function defaultNovedad(): Novedad {
-    return{
-            _id: 0,
-            fecha: '',
-            legajo: 0 ,
-            apellido: '',
-            nombres: '',
-            base: '',
-            especialidad: '',
-            turno: '',
-            franco: '',
-            tipoNovedad:'',
-            fechaBaja:'',
-            fechaAlta:'',
-            HNA: false,
-            detalle:'',
-            viewDetail:false,
-            novedadInactiva: false,
+// export function defaultPersonal(): IPersonal {
+//     return {
+//         _id: '',
+//         legajo: 0,
+//         apellido: '',
+//         nombres: '',
+//         turno: '',
+//         franco: 0,
+//         especialidad: '',
+//         dotacion: '',
+//         observaciones: '',
+//         orden: 0,
+//         conocimientos: {
+//             CML: false,
+//             CKD: false,
+//             RO: false,
+//             MPN: false,
+//             OL: false,
+//             LCI: false,
+//             ELEC: false,
+//             DUAL: false,
+//         },
+//         viewDetail: false,
+//     };
+// }
+// export function defaultTurnos(): ITurno {
+//     return {
+//         _id: '',
+//         turno: '',
+//         itinerario: '',
+//         circular: '',
+//         personal: '',
+//         toma: '',
+//         deja: '',
+//         dotacion: '',
+//         especialidad: '',
+//         ordenes: false,
+//         viewDetail: false,
+//         vueltas: [{} as Vueltas],
+//     }
+// }
+// export function defaultNovedad(): Novedad {
+//     return{
+//             _id: 0,
+//             fecha: '',
+//             legajo: 0 ,
+//             apellido: '',
+//             nombres: '',
+//             base: '',
+//             especialidad: '',
+//             turno: '',
+//             franco: '',
+//             tipoNovedad:'',
+//             fechaBaja:'',
+//             fechaAlta:'',
+//             HNA: false,
+//             detalle:'',
+//             viewDetail:false,
+//             novedadInactiva: false,
 
-            remplazo: [],
+//             remplazo: [],
             
-    }
-}
-export function defaultPersonalSinDiagrama(): IPersonalSinDiagrama {
-    return {
-        _id: '',
-        legajo: 0,
-        Ciclo: 0,
-        francoInicio: 0,
-        HoraInicio: '',
-        francoHasta: 0,
-        HoraHasta: '',
-    };
-}
-export function defaultTarjetaPersonalSinDiagrama(): ITarjetaPersonalSinDiagrama {
-    return {
-        _id: '',
-        legajo: 0,
-        Ciclo: 0,
-        francoInicio: 0,
-        HoraInicio: '',
-        francoHasta: 0,
-        HoraHasta: '',
-        mes: '',
-        days:{}
-    };
-}
-export function defaultJornada(): Jornada {
-    return {
-        tren: '', 
-        desde: '', 
-        hasta: '', 
-        disponibleHora: '', 
-        tomo: '', 
-        dejo: '', 
-        totalHoras: '', 
-        dia_laboral: null,
-        observaciones: '',
-        editable: true,
-        estilo: false, 
-        nroNovedad: null
-    };
-}
-export function formatearFecha(fechaString: string): string {
-    const fecha: Date = new Date(fechaString);
-    const opcionesDeFormato: Intl.DateTimeFormatOptions = {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    };
-    const formatoFecha = new Intl.DateTimeFormat(
-        "es-AR",
-        opcionesDeFormato
-    );
+//     }
+// }
+// export function defaultCambioTurno(): CambioTurno {
+//     return {
+//         _id: 0,
+//         fechaCambio:"",
+//         fecha:"",
+//         personal: [
+//             {
+//                 legajo: 0,
+//                 apellido: "",
+//                 nombres: "",
+//                 base: "",
+//                 especialidad: "",
+//                 turno: "",
+//                 franco: "",
+//                 turnoEfectivo: "",
+//                 tomada: "",
+//                 dejada: "",
+//             },
+//             {
+//                 legajo: 1,
+//                 apellido: "",
+//                 nombres: "",
+//                 base: "",
+//                 especialidad: "",
+//                 turno: "",
+//                 franco: "",
+//                 turnoEfectivo: "",
+//                 tomada: "",
+//                 dejada: "",
+//             }
+//         ]
 
-    return formatoFecha.format(fecha);
-}
+//     }
+// }
+// export function defaultPersonalSinDiagrama(): IPersonalSinDiagrama {
+//     return {
+//         _id: '',
+//         legajo: 0,
+//         Ciclo: 0,
+//         francoInicio: 0,
+//         HoraInicio: '',
+//         francoHasta: 0,
+//         HoraHasta: '',
+//     };
+// }
+// export function defaultTarjetaPersonalSinDiagrama(): ITarjetaPersonalSinDiagrama {
+//     return {
+//         _id: '',
+//         legajo: 0,
+//         Ciclo: 0,
+//         francoInicio: 0,
+//         HoraInicio: '',
+//         francoHasta: 0,
+//         HoraHasta: '',
+//         mes: '',
+//         days:{}
+//     };
+// }
+// export function defaultJornada(): Jornada {
+//     return {
+//         tren: '', 
+//         desde: '', 
+//         hasta: '', 
+//         disponibleHora: '', 
+//         tomo: '', 
+//         dejo: '', 
+//         totalHoras: '', 
+//         dia_laboral: null,
+//         observaciones: '',
+//         editable: true,
+//         estilo: false, 
+//         nroNovedad: null
+//     };
+// }
+// export function formatearFecha(fechaString: string): string {
+//     const fecha: Date = new Date(fechaString);
+//     const opcionesDeFormato: Intl.DateTimeFormatOptions = {
+//         day: "2-digit",
+//         month: "2-digit",
+//         year: "numeric",
+//         hour: "2-digit",
+//         minute: "2-digit",
+//     };
+//     const formatoFecha = new Intl.DateTimeFormat(
+//         "es-AR",
+//         opcionesDeFormato
+//     );
+
+//     return formatoFecha.format(fecha);
+// }
 
 /**
  * Esta función se utiliza para quitar los duplicados que pueda tener la lista 
@@ -829,28 +864,28 @@ export async function guardarRegistro(today:Date,accion:string,turno?: ITurno,pe
     };
     await createRegistro(registro);
 }
-const diasDeLaSemana = [
-    "Domingo",
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
-];
-export function obtenerNumeroDia(dia: string):number {
-    // Si se encuentra, devuelve el índice (0-6); de lo contrario, devuelve -1
-    return diasDeLaSemana.findIndex((nombre) => nombre === dia);
-}
-export function obtenerDiaSemana(num:number):string{
-    return diasDeLaSemana[num]
-}
-export function itinerarioType(fecha: Date) {
-    if (fecha.getDay() === 0) {
-        return "D";
-    } else if (fecha.getDay() === 6) {
-        return "S";
-    } else {
-        return "H";
-    }
-}
+// const diasDeLaSemana = [
+//     "Domingo",
+//     "Lunes",
+//     "Martes",
+//     "Miércoles",
+//     "Jueves",
+//     "Viernes",
+//     "Sábado",
+// ];
+// export function obtenerNumeroDia(dia: string):number {
+//     // Si se encuentra, devuelve el índice (0-6); de lo contrario, devuelve -1
+//     return diasDeLaSemana.findIndex((nombre) => nombre === dia);
+// }
+// export function obtenerDiaSemana(num:number):string{
+//     return diasDeLaSemana[num]
+// }
+// export function itinerarioType(fecha: Date) {
+//     if (fecha.getDay() === 0) {
+//         return "D";
+//     } else if (fecha.getDay() === 6) {
+//         return "S";
+//     } else {
+//         return "H";
+//     }
+// }

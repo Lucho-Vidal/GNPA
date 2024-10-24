@@ -173,12 +173,13 @@
 <script lang="ts">
 import { newToken } from "../../services/signService";
 import { defineComponent } from "vue";
-import {  defaultJornada, defaultNovedad, defaultPersonal, defaultPersonalSinDiagrama, defaultTurnos, 
-    dia_laboral,filtrarPorTurno, itinerarioType,  obtenerNumeroDia,
-    loadNovedades, loadPersonal, loadPersonalSinDiagrama, loadTurnos, 
-    defaultTarjetaPersonalSinDiagrama,
-    loadTarjetaPersonalSinDiagramaPorLegajoYMes} from '../../utils/funciones';
-import { diaAnterior, diaPosterior, diferenciaHoras, dosDiasAnterior, esFechaMayorIgual,  sumarHoras} from '../../utils/fechas'
+
+import {  loadNovedades, loadPersonal, loadPersonalSinDiagrama, loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from "../../utils/funciones";
+import { defaultJornada, defaultNovedad, defaultPersonal, defaultPersonalSinDiagrama, defaultTurnos, defaultTarjetaPersonalSinDiagrama} from '../../utils/interfacesDefault';
+import { itinerarioType, diaAnterior, diaPosterior, diferenciaHoras, dosDiasAnterior, esFechaMayorIgual,  obtenerNumeroDia,  sumarHoras} from '../../utils/fechas'
+import { dia_laboral } from "../../utils/personal";
+import { filtrarPorTurno } from "../../utils/turnos";
+
 import { IPersonal } from '../../interfaces/IPersonal';
 import { IPersonalSinDiagrama } from '../../interfaces/IPersonalSinDiagrama';
 import { Novedad, Remplazo } from "../../interfaces/INovedades";
@@ -186,6 +187,7 @@ import { ITurno } from "../../interfaces/ITurno";
 import { ITarjetaPersonalSinDiagrama, Jornada } from "../../interfaces/ITarjetaPersonalSinDiagrama";
 import { createTarjetaPersonalSinDiagrama, updateTarjetaPersonalSinDiagrama } from "../../services/tarjetaPersonalSinDiagramaService";
 import { calcularTotalHoras } from "../../utils/fechas";
+import { filtrarNovedadesPorLegajo, filtrarRelevosPorLegajo } from "../../utils/novedades";
 export default defineComponent({
     props: ['idPersonal', 'idPersonalSinDiagrama'],
     data() {
@@ -193,10 +195,12 @@ export default defineComponent({
             personal: {} as IPersonal,
             personalSinDiagrama: {} as IPersonalSinDiagrama,
             tarjetaPersonalSinDiagrama: {} as ITarjetaPersonalSinDiagrama,
-            // tarjetaPersonalSinDiagramaMesAnterior: {} as ITarjetaPersonalSinDiagrama,
 
             lstNovedades: [] as Novedad[],
             lstTurnos: [] as ITurno[],
+
+            novedades: [] as Novedad[],
+            relevos: [] as Novedad[],
 
             today: new Date(),
 
@@ -259,10 +263,16 @@ export default defineComponent({
                     return
                 }
             }
+            //Borro todas la fechas que estén
             this.tarjetaPersonalSinDiagrama = defaultTarjetaPersonalSinDiagrama();
+
+            //Busco si esta la tarjeta sino la creo vacía
             this.tarjetaPersonalSinDiagrama = await loadTarjetaPersonalSinDiagramaPorLegajoYMes(this.personal.legajo,this.selectedMonth) || defaultTarjetaPersonalSinDiagrama();
+            
+            // Arma la tabla
             this.daysInMonth();
             this.tarjetaPersonalSinDiagrama['mes'] = this.selectedMonth
+
             //si no existe id es porque sea acaba de crear la tarjeta
             if(!this.tarjetaPersonalSinDiagrama._id){
                 this.tarjetaPersonalSinDiagrama.Ciclo = this.personalSinDiagrama.Ciclo;
@@ -273,7 +283,8 @@ export default defineComponent({
                 this.tarjetaPersonalSinDiagrama.HoraHasta = this.personalSinDiagrama.HoraHasta;
                                 
                 this.buscarNovedadesActivas();
-                //construimos la tarjeta
+
+                //alertamos la creación de la nueva tarjeta
                 this.message.activo = true
                 this.message.status = 'warning'
                 this.message.title = 'Se creo una nueva tarjeta'
@@ -281,8 +292,34 @@ export default defineComponent({
                 setTimeout(()=>{
                     this.message.activo = false
                 },5000)
+            }else{
+                //tengo que verificar que las novedades estén actualizadas
+                this.fechasDelMes.forEach((fechaStr:string)=>{
+                    const fecha = new Date(fechaStr + "T12:00");
+                    const  campoTren = this.tarjetaPersonalSinDiagrama.days[fechaStr].tren
+                    if(campoTren !== '' && campoTren !== 'Orden' && campoTren !== 'DH anticipado'){
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].tren = '';
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].disponibleHora = '';
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].tomo = '';
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].dejo = '';
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].totalHoras = '';
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].observaciones = '';
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].editable = true;
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].estilo = false;
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].nroNovedad = null;
+                        //3 Calculamos jornada y relevos
+                        this.procesarRelevo(this.relevos, fechaStr, fecha);
+                        
+                        //4 Calculamos disponibilidad
+                        this.calcularDisponibilidad(fechaStr);
+
+                        //5 Verificamos si estuvo de baja por enfermedad
+                        this.procesarBajaPorEnfermedad(this.novedades, fechaStr);
+                    }
+
+                })
+
             }
-            console.table(this.tarjetaPersonalSinDiagrama.days)
         },
         salir(){
             if(this.cambioSinGuardar){
@@ -440,7 +477,96 @@ export default defineComponent({
                 event.preventDefault();  // Evitar el comportamiento por defecto del enter
             }
         },
-        buscarJornadas(fecha:string, nombreTurno:string,jornada:number){
+
+        //Desde aca están las funciones que crean la tarjeta por primera vez
+        // Busca las novedades activas relacionadas con el legajo de la persona y calcula disponibilidad, jornadas y relevos.
+        buscarNovedadesActivas() {
+            
+            
+            this.fechasDelMes.forEach((dia: string) => {
+                //1
+                this.inicializarDiaSiNoExiste(dia);
+
+                //2
+                const fecha = new Date(dia + "T12:00");
+                this.calcularFranco(dia, fecha);
+
+                //3 Calculamos jornada y relevos
+                this.procesarRelevo(this.relevos, dia, fecha);
+                
+                //4 Calculamos disponibilidad
+                this.calcularDisponibilidad(dia);
+
+                //5 Verificamos si estuvo de baja por enfermedad
+                this.procesarBajaPorEnfermedad(this.novedades, dia);
+            });
+        },
+        //1
+        inicializarDiaSiNoExiste(dia: string) {
+            if (!this.tarjetaPersonalSinDiagrama.days) {
+                this.tarjetaPersonalSinDiagrama.days = {};
+            }
+            if (!this.tarjetaPersonalSinDiagrama.days[dia]) {
+                this.tarjetaPersonalSinDiagrama.days[dia] = defaultJornada();
+            }
+        },
+        //2
+        calcularFranco(dia: string, fecha: Date) {
+            if (fecha.getDay() === this.tarjetaPersonalSinDiagrama.francoInicio) {
+                this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `DH del ciclo // desde ${this.diaSemanaStr(this.tarjetaPersonalSinDiagrama.francoInicio)} ${this.tarjetaPersonalSinDiagrama.HoraInicio}`;
+                this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = 6;
+                this.tarjetaPersonalSinDiagrama.days[dia].dejo = this.tarjetaPersonalSinDiagrama.HoraInicio;
+            } else if (fecha.getDay() === this.tarjetaPersonalSinDiagrama.francoInicio + 1) {
+                this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = this.tarjetaPersonalSinDiagrama.HoraHasta;
+                this.tarjetaPersonalSinDiagrama.days[dia].tomo = 'DH';
+                this.tarjetaPersonalSinDiagrama.days[dia].dejo = 'DH';
+                this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = 0;
+                this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `DH del ciclo // hasta ${this.diaSemanaStr(this.tarjetaPersonalSinDiagrama.francoHasta)} ${this.tarjetaPersonalSinDiagrama.HoraHasta}`;
+            } else {
+                const diaAnt = diaAnterior(dia + "T12:00");
+                this.calcularJornadaPosFranco(this.tarjetaPersonalSinDiagrama.days?.[diaAnt]?.dia_laboral, dia);
+            }
+        },
+        // Calcula el número de días laborales consecutivos después de un franco.
+        calcularJornadaPosFranco (diaAnteriorLaboral:number|null,dia:string)  {
+            if (typeof diaAnteriorLaboral === 'number') {
+                if (this.tarjetaPersonalSinDiagrama.days?.[dia]) {
+                    this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = diaAnteriorLaboral + 1;
+                }
+            }
+        },
+        //3
+        procesarRelevo(relevos: Novedad[], dia: string, fecha: Date) {
+            relevos.forEach((novedad: Novedad) => {
+                novedad.remplazo.forEach((remplazo: Remplazo) => {
+                    if (remplazo.legajo === this.personal.legajo && esFechaMayorIgual(dia, remplazo.inicioRelevo) && 
+                        (remplazo.finRelevo === '' || esFechaMayorIgual(remplazo.finRelevo, dia))) {
+                        this.registrarRelevo(dia, novedad,  fecha);
+                    }
+                });
+            });
+        },
+        // Registra un relevo para un día específico, actualizando la tarjeta de la persona con los detalles del turno.
+        registrarRelevo(dia: string, novedad: Novedad, fecha: Date) {
+            this.tarjetaPersonalSinDiagrama.days[dia].tren = novedad.turno;
+            this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `Relevando en la novedad N°${novedad._id} vice ${novedad.apellido} ${novedad.nombres} de baja por ${novedad.tipoNovedad}`;
+            this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id;
+            this.tarjetaPersonalSinDiagrama.days[dia].editable = false;
+
+            const francoNroSemana = obtenerNumeroDia(novedad.franco);
+            const jornada = dia_laboral(francoNroSemana, fecha.getDay());
+
+            if (francoNroSemana === fecha.getDay()) {
+                this.tarjetaPersonalSinDiagrama.days[dia].tomo = 'DH';
+                this.tarjetaPersonalSinDiagrama.days[dia].dejo = 'DH';
+            } else {
+                const { tomo, dejo } = this.buscarJornadasDelTurno(dia, novedad.turno, jornada);
+                this.tarjetaPersonalSinDiagrama.days[dia].tomo = tomo;
+                this.tarjetaPersonalSinDiagrama.days[dia].dejo = dejo;
+                this.tarjetaPersonalSinDiagrama.days[dia].totalHoras = diferenciaHoras(tomo, dejo);
+            }
+        },
+        buscarJornadasDelTurno(fecha:string, nombreTurno:string,jornada:number){
             const date = new Date(fecha+"T12:00")
             const itinerario: string = itinerarioType(date);
             const turnosEncontrados = filtrarPorTurno(
@@ -457,122 +583,48 @@ export default defineComponent({
             
             return {tomo:turno.toma,dejo:turno.deja}
         },
+        //4
+        // Calcula la disponibilidad de una persona para un día específico.
+        calcularDisponibilidad(dia: string) {
+            const mes = this.tarjetaPersonalSinDiagrama.days;
+            const especialidad = this.personal.especialidad.toLowerCase();
+            this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = this.calcularDisponibilidadDiaAnterior(dia, mes, especialidad);
+        },
+        calcularDisponibilidadDiaAnterior(dia: string, mes: any, especialidad: string) {
+            const diaAnt = mes[diaAnterior(dia + 'T12:00')];
+            const dosDiasAnt = mes[dosDiasAnterior(dia + 'T12:00')];
+            if (!diaAnt) return '';
 
-        buscarNovedadesActivas(){
-            const novedades = this.lstNovedades.filter((novedad:Novedad)=>{
-                return novedad.legajo === this.personal.legajo && 
-                !novedad.novedadInactiva
-            })
-            const relevos = this.lstNovedades.filter((novedad:Novedad)=>{
-                return (novedad.remplazo.some((remplazo:Remplazo)=> remplazo.legajo === this.personal.legajo) && 
-                !novedad.novedadInactiva)
-            })
+            let horasASumar = especialidad.includes('guardatren diesel') ? 17 : 18;
 
-            // Función para calcular la disponibilidad
-            const calcularDisponibilidad = (dia: string) => {
-                const mes = this.tarjetaPersonalSinDiagrama.days;
-                const especialidad = this.personal.especialidad.toLowerCase();
-
-                // Verificamos si existe el día anterior
-                const diaAnt = mes[diaAnterior(dia+'T12:00')];
-                const dosDiasAnt = mes[dosDiasAnterior(dia+'T12:00')];
-                
-                // Si el día anterior no existe, no hay nada que hacer
-                if (!diaAnt) return;
-                
-                let horasASumar = especialidad.includes('guardatren diesel') ? 17 : 18;
-                
-                // Si el día anterior es 'DH', verificamos el día de dos días antes
-                if (diaAnt.tomo === 'DH' && dosDiasAnt && dosDiasAnt.dejo !== '' ) {
-                    horasASumar = especialidad.includes('guardatren diesel') ? 41 : 42;
-                    this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = sumarHoras(dosDiasAnt.dejo, horasASumar);
-                } 
-                // Si el día anterior no es 'DH', calculamos con el día anterior
-                else if (diaAnt.dejo !== 'DH' && mes[dia].tomo !== 'DH' && diaAnt.dejo !== '') {
-                    this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = sumarHoras(diaAnt.dejo, horasASumar);
-                }else
-                    this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = '';
+            if (diaAnt.tomo === 'DH' && dosDiasAnt && dosDiasAnt.dejo !== '') {
+                horasASumar = especialidad.includes('guardatren diesel') ? 41 : 42;
+                return sumarHoras(dosDiasAnt.dejo, horasASumar);
+            } else if (diaAnt.dejo !== 'DH' && diaAnt.dejo !== '') {
+                return sumarHoras(diaAnt.dejo, horasASumar);
+            } else {
+                return '';
             }
-
-            const calcularJornadaPosFranco = (diaAnteriorLaboral:number|null,dia:string) => {
-                if (typeof diaAnteriorLaboral === 'number') {
-                    if (this.tarjetaPersonalSinDiagrama.days?.[dia]) {
-                        this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = diaAnteriorLaboral + 1;
-                    }
+        },
+        // 5
+        procesarBajaPorEnfermedad(novedades: Novedad[], dia: string) {
+            novedades.forEach((novedad: Novedad) => {
+                if (esFechaMayorIgual(dia, novedad.fechaBaja) && 
+                    (novedad.fechaAlta === undefined || esFechaMayorIgual(novedad.fechaAlta, dia))) {
+                    this.registrarBajaPorEnfermedad(dia, novedad);
                 }
-            }
-
-            this.fechasDelMes.forEach((dia:string)=>{
-                const fecha = new Date(dia+"T12:00")
-                // sino existe el dia se crea
-                if (!this.tarjetaPersonalSinDiagrama.days) {
-                    this.tarjetaPersonalSinDiagrama.days = {} 
-                }
-                if (!this.tarjetaPersonalSinDiagrama.days[dia]) {
-                    this.tarjetaPersonalSinDiagrama.days[dia] = defaultJornada()
-                }
-                
-                if(fecha.getDay() === this.tarjetaPersonalSinDiagrama.francoInicio){
-                    this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `DH del ciclo // desde ${this.diaSemanaStr(this.tarjetaPersonalSinDiagrama.francoInicio)} ${this.tarjetaPersonalSinDiagrama.HoraInicio}`;
-                    this.tarjetaPersonalSinDiagrama.days[dia].dejo = this.tarjetaPersonalSinDiagrama.HoraInicio;
-                }
-                if(fecha.getDay() === this.tarjetaPersonalSinDiagrama.francoInicio + 1 ){
-                    this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = this.tarjetaPersonalSinDiagrama.HoraHasta;
-                    this.tarjetaPersonalSinDiagrama.days[dia].tomo = 'DH';
-                    this.tarjetaPersonalSinDiagrama.days[dia].dejo = 'DH';
-                    this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = 0;
-                    this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `DH del ciclo // hasta ${this.diaSemanaStr(this.tarjetaPersonalSinDiagrama.francoHasta)} ${this.tarjetaPersonalSinDiagrama.HoraHasta}`
-                }else{
-                    calcularJornadaPosFranco(this.tarjetaPersonalSinDiagrama.days?.[diaAnterior(dia+"T12:00")]?.dia_laboral , dia);
-
-                }
-
-                //Busco si estuvo relevando
-                relevos.forEach((novedad:Novedad)=>{
-                    novedad.remplazo.forEach((remplazo:Remplazo)=>{
-                        if(remplazo.legajo === this.personal.legajo && esFechaMayorIgual(dia,remplazo.inicioRelevo) && (remplazo.finRelevo === '' || esFechaMayorIgual(remplazo.finRelevo,dia))){
-                            // si tiene relevo por novedad se registra
-                            this.tarjetaPersonalSinDiagrama.days[dia].tren = novedad.turno
-                            this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `Relevando en la novedad N°${novedad._id} vice ${novedad.apellido} ${novedad.nombres} de baja por ${novedad.tipoNovedad}`
-                            this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id
-                            this.tarjetaPersonalSinDiagrama.days[dia].editable = false
-
-                            const francoNroSemana = obtenerNumeroDia(novedad.franco)
-                            const jornada = dia_laboral(francoNroSemana, fecha.getDay());
-                            
-                            //reviso si esta de franco
-                            if(francoNroSemana === fecha.getDay()){
-                                this.tarjetaPersonalSinDiagrama.days[dia].tomo = 'DH'
-                                this.tarjetaPersonalSinDiagrama.days[dia].dejo = 'DH'
-                            }else{
-                                const {tomo,dejo} = this.buscarJornadas(dia,novedad.turno,jornada)
-                                this.tarjetaPersonalSinDiagrama.days[dia].tomo = tomo
-                                this.tarjetaPersonalSinDiagrama.days[dia].dejo = dejo
-                                // this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = (this.tarjetaPersonalSinDiagrama.days?.[diaAnterior(dia)]?.dia_laboral ?? 0) + 1;
-                                this.tarjetaPersonalSinDiagrama.days[dia].totalHoras = diferenciaHoras(tomo,dejo)
-                            }
-                        }                    
-                    })
-                })
-                // calculamos la disponibilidad
-                calcularDisponibilidad(dia);
-
-                // busco si tuvo baja por enfermedad
-                novedades.forEach((novedad:Novedad)=>{
-                    if(esFechaMayorIgual(dia,novedad.fechaBaja) && (novedad.fechaAlta === undefined || esFechaMayorIgual(novedad.fechaAlta,dia))){
-                        // si tiene baja por novedad se registra
-                        this.tarjetaPersonalSinDiagrama.days[dia].tren = novedad.tipoNovedad
-                        this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = '-'
-                        this.tarjetaPersonalSinDiagrama.days[dia].tomo = ''
-                        this.tarjetaPersonalSinDiagrama.days[dia].dejo = ''
-                        this.tarjetaPersonalSinDiagrama.days[dia].totalHoras = '-'
-                        this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `De baja por la novedad N°${novedad._id}`
-                        this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id
-                        this.tarjetaPersonalSinDiagrama.days[dia].estilo = true
-                        this.tarjetaPersonalSinDiagrama.days[dia].editable = false
-                    }  
-                })
-            })
+            });
+        },
+        registrarBajaPorEnfermedad(dia: string, novedad: Novedad) {
+            this.tarjetaPersonalSinDiagrama.days[dia].tren = novedad.tipoNovedad;
+            this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = '-';
+            this.tarjetaPersonalSinDiagrama.days[dia].tomo = '';
+            this.tarjetaPersonalSinDiagrama.days[dia].dejo = '';
+            this.tarjetaPersonalSinDiagrama.days[dia].totalHoras = '-';
+            this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `De baja por la novedad N°${novedad._id}`;
+            this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id;
+            this.tarjetaPersonalSinDiagrama.days[dia].estilo = true;
+            this.tarjetaPersonalSinDiagrama.days[dia].editable = false;
         },
     },
     async mounted() {
@@ -593,6 +645,9 @@ export default defineComponent({
             this.tarjetaPersonalSinDiagrama =  await loadTarjetaPersonalSinDiagramaPorLegajoYMes(this.personal.legajo,this.selectedMonth) || defaultTarjetaPersonalSinDiagrama();
             this.lstNovedades = await loadNovedades() || [defaultNovedad()];
             this.lstTurnos = await loadTurnos() || [defaultTurnos()];
+
+            this.novedades = filtrarNovedadesPorLegajo(this.personal.legajo, this.lstNovedades);
+            this.relevos = filtrarRelevosPorLegajo(this.personal.legajo, this.lstNovedades);
             
             this.seleccionPeriodo()
             

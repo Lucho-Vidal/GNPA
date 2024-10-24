@@ -686,7 +686,7 @@ import { createRegistro } from "../../services/registrosService";
 import { AxiosError } from "axios";
 import { createPersonalSinDiagrama, getPersonalSinDiagrama, updatePersonalSinDiagrama } from "../../services/personalSinDiagramaService";
 import { IPersonalSinDiagrama } from "../../interfaces/IPersonalSinDiagrama";
-import { defaultPersonal } from "../../utils/funciones";
+import { defaultPersonal } from "../../utils/interfacesDefault";
 
 export default defineComponent({
     props: ["idPersonal", "idDato", "idVia","idTarjeta"],

@@ -351,11 +351,13 @@ import { getPersonales } from "../../services/personalService";
 import { IPersonal } from "../../interfaces/IPersonal";
 import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
-import { defaultPersonal, obtenerDotaciones, diaPosterior } from '../../utils/funciones';
 import { getPersonalesSinDiagrama } from "../../services/personalSinDiagramaService";
 import { IPersonalSinDiagrama } from "../../interfaces/IPersonalSinDiagrama";
 import { ITarjetaPersonalSinDiagrama } from "../../interfaces/ITarjetaPersonalSinDiagrama";
 import { getTarjetaPersonalesSinDiagrama } from "../../services/tarjetaPersonalSinDiagramaService";
+import { obtenerDotaciones } from "../../utils/personal";
+import { defaultPersonal } from "../../utils/interfacesDefault";
+import { diaPosterior } from "../../utils/fechas";
 
 export default defineComponent({
     props: ['idPersonal', 'idPersonalSinDiagrama', 'idTarjetaPersonalSinDiagrama'],

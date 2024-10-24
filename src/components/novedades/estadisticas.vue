@@ -397,12 +397,12 @@ import {
     loadNovedades,
     loadPersonales,
     loadTurnos,
-    obtenerDotaciones,
-    obtenerTiposCirculares,
 } from "../../utils/funciones";
 import { IEstadistica, TipoAusentismo } from "../../interfaces/IEstadistica";
 import { ITurno } from "../../interfaces/ITurno";
 import { IPersonal } from "../../interfaces/IPersonal";
+import { obtenerTiposCirculares } from "../../utils/turnos";
+import { obtenerDotaciones } from "../../utils/personal";
 // ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default defineComponent({

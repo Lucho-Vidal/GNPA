@@ -411,3 +411,89 @@ export function diaPosterior(fecha: string): string {
     // Devolver la nueva fecha en formato YYYY-MM-DD
     return `${newYear}-${newMonth}-${newDay}`;
   }
+
+  const diasDeLaSemana = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+];
+
+/**
+ * Obtiene el índice del día de la semana correspondiente al nombre dado.
+ *
+ * @param dia - El nombre del día de la semana (por ejemplo, "Lunes").
+ * @returns El índice del día en la semana (0 para "Domingo", 1 para "Lunes", etc.), 
+ * o -1 si el día no se encuentra en la lista.
+ */
+export function obtenerNumeroDia(dia: string): number {
+    return diasDeLaSemana.findIndex((nombre) => nombre === dia);
+}
+
+/**
+ * Obtiene el nombre del día de la semana correspondiente a un número dado.
+ *
+ * @param num - El índice del día de la semana (0 para "Domingo", 1 para "Lunes", etc.).
+ * @returns El nombre del día correspondiente al índice dado, o `undefined` si el número está fuera de rango.
+ */
+export function obtenerDiaSemana(num: number): string | undefined {
+    return diasDeLaSemana[num];
+}
+
+/**
+ * Determina el tipo de itinerario basado en el día de la semana.
+ *
+ * @param fecha - Un objeto de tipo Date que representa la fecha a evaluar.
+ * @returns Una cadena que representa el tipo de itinerario:
+ * - "D" para domingo.
+ * - "S" para sábado.
+ * - "H" para días hábiles (lunes a viernes).
+ */
+export function itinerarioType(fecha: Date): string {
+    const day = fecha.getDay();
+    if (day === 0) {
+        return "D"; // Domingo
+    } else if (day === 6) {
+        return "S"; // Sábado
+    } else {
+        return "H"; // Días hábiles
+    }
+}
+/**
+ * Formatea una fecha en formato "dd/mm/yyyy hh:mm" basado en el formato de Argentina ("es-AR").
+ * Si la fecha es inválida, devuelve el mensaje "Fecha inválida".
+ *
+ * @param {string} fechaString - La fecha en formato string que se desea formatear.
+ *        Ejemplos válidos: "2024-10-23T14:00:00", "2023-01-01 12:30:00".
+ *        Ejemplo inválido: "fecha no válida".
+ * @returns {string} - La fecha formateada en "dd/mm/yyyy hh:mm" o "Fecha inválida" si el formato no es válido.
+ *
+ * @example
+ * formatearFecha("2024-10-23T14:00:00"); // "23/10/2024 14:00"
+ *
+ * @example
+ * formatearFecha("fecha no válida"); // "Fecha inválida"
+ */
+export function formatearFecha(fechaString: string): string {
+    const fecha: Date = new Date(fechaString);
+
+    // Verificar si la fecha es válida
+    if (isNaN(fecha.getTime())) {
+        return "Fecha inválida"; // Mensaje en caso de que la fecha sea inválida
+    }
+
+    const opcionesDeFormato: Intl.DateTimeFormatOptions = {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    };
+
+    const formatoFecha = new Intl.DateTimeFormat("es-AR", opcionesDeFormato);
+
+    return formatoFecha.format(fecha);
+}

@@ -373,15 +373,14 @@ import { getNovedades } from "../../services/novedadesService";
 import { getPersonales } from "../../services/personalService";
 import { Novedad } from "../../interfaces/INovedades";
 import {
-    compararHoras,
     handleRequestError,
     quitarDuplicados,
-    buscarPersonalACargo,
-    obtenerTiposCirculares,
     loadCambiosTurnos,
-    obtenerDotaciones,
 } from "../../utils/funciones";
 import { CambioTurno } from "../../interfaces/ICambioTurno";
+import { obtenerTiposCirculares } from "../../utils/turnos";
+import { buscarPersonalACargo, obtenerDotaciones } from "../../utils/personal";
+import { compararHoras } from "../../utils/fechas";
 
 export default defineComponent({
     data() {
@@ -519,7 +518,12 @@ export default defineComponent({
                 turnosGuardas.forEach((turno) => (turno.viewDetail = true));
             }
 
-            const ordenarPorHora = (turnos:ITurno[]) => turnos.sort((turno1: ITurno, turno2: ITurno) => compararHoras(turno1.toma, turno2.toma));
+            const ordenarPorHora = (turnos: ITurno[]) =>
+                    turnos.sort((turno1: ITurno, turno2: ITurno) => {
+                        const resultado = compararHoras(turno1.toma, turno2.toma);
+                        return resultado !== null ? resultado : 0; // Asegura que siempre se devuelva un número
+                    });
+
 
             this.turnosGuardas = ordenarPorHora(turnosGuardas);
             this.turnosConductor = ordenarPorHora(turnosConductor);

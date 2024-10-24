@@ -258,7 +258,6 @@ import { Novedad } from "../../interfaces/INovedades";
 import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
 import {
-    esFechaIgual,
     guardarRegistro,
     handleRequestError,
 } from "../../utils/funciones";
@@ -267,6 +266,7 @@ import {
     getOrdenamientos,
     deleteOrdenamiento,
 } from "../../services/ordenamientoService";
+import { esFechaIgual } from "../../utils/fechas";
 
 export default defineComponent({
     data() {

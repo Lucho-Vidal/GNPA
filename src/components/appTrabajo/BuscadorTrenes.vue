@@ -177,7 +177,9 @@ import { IPersonal } from "../../interfaces/IPersonal";
 import { Novedad } from "../../interfaces/INovedades";
 import { newToken } from "../../services/signService";
 import { CambioTurno } from '../../interfaces/ICambioTurno';
-import { buscarPersonalACargo, filtrarPorTurno, filtroTrenes, filtroItinerario, obtenerTiposCirculares, handleRequestError, loadItinerario, loadCambiosTurnos, loadPersonales, loadNovedades } from '../../utils/funciones';
+import { handleRequestError, loadItinerario, loadCambiosTurnos, loadPersonales, loadNovedades } from '../../utils/funciones';
+import { filtrarPorTurno, filtroItinerario, filtroTrenes, obtenerTiposCirculares } from "../../utils/turnos";
+import { buscarPersonalACargo } from "../../utils/personal";
 
 export default defineComponent({
     data() {
@@ -246,22 +248,18 @@ export default defineComponent({
                     "Guardatren electrico": 5,
                     "Guardatren diesel": 6,
                 };
-
-                // Función de comparación personalizada
                 function compararEspecialidades(a: ITurno, b: ITurno): number {
                     const prioridadA = especialidadPrioridad[a.especialidad];
                     const prioridadB = especialidadPrioridad[b.especialidad];
 
                     return prioridadA - prioridadB;
                 }
-
-
                 if(!this.isSearchByTurno){
                     this.turnosAImprimir = filtroTrenes(
                         itinerario,
                         this.lstTurnos,
                         this.circularSeleccionada,
-                        parseInt(this.tren)
+                        this.tren
                     );
                     // Ordena el array utilizando la función de comparación
                     this.turnosAImprimir.sort(compararEspecialidades);
@@ -269,7 +267,7 @@ export default defineComponent({
                     this.horarios = filtroItinerario(
                         itinerario,
                         this.itinerario,
-                        parseInt(this.tren)
+                        this.tren
                     );
                 }else {
                     this.turnosAImprimir = filtrarPorTurno(

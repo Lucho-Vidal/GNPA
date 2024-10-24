@@ -225,7 +225,7 @@ import {  getTurno, updateTurno } from "../../services/turnosService";
 import { Registro } from "../../interfaces/IRegistro";
 import { createRegistro } from "../../services/registrosService";
 import { AxiosError } from "axios";
-import { defaultTurnos } from "../../utils/funciones";
+import { defaultTurnos } from "../../utils/interfacesDefault";
 
 export default defineComponent({
     data() {
