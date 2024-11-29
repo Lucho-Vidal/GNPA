@@ -212,7 +212,11 @@
                         </td>
                         <td class="col-1" v-else></td>
                     </tr>
-                    <tr class='custom-orange' v-if="personal.viewDetail && tarjetaPersonalSinDiagramaIndexado[personal.legajo] && tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes && tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes">
+                    <tr class='custom-orange' v-if="
+                        personal.viewDetail && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo] && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]">
                     <!-- <tr  class='custom-orange' v-if="personal.viewDetail  && tarjetaPersonalSinDiagramaIndexado[personal.legajo].meses[selectedMonth]"> -->
                         <th class="col-1" colspan="1">fecha</th>
                         <th class="col-1" colspan="1">Diagrama</th>
@@ -223,25 +227,33 @@
                         <th class="col-1" colspan="6">Observaciones</th>
                         
                     </tr>
-                    <tr class='custom-orange' v-if="personal.viewDetail && tarjetaPersonalSinDiagramaIndexado[personal.legajo] && tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes && tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes">
+                    <tr class='custom-orange' v-if="
+                        personal.viewDetail && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo] && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.mes && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]">
                     <!-- <tr class='custom-orange' v-if="personal.viewDetail && tarjetaPersonalSinDiagramaIndexado[personal.legajo].meses[selectedMonth]"> -->
                         <td colspan="1">{{ today.toLocaleDateString() }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[today.toISOString().split('T')[0]].tren }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[today.toISOString().split('T')[0]].disponibleHora }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[today.toISOString().split('T')[0]].tomo }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[today.toISOString().split('T')[0]].dejo }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[today.toISOString().split('T')[0]].totalHoras }}</td>
-                        <td colspan="6">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[today.toISOString().split('T')[0]].observaciones }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]?.tren || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]?.disponibleHora || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]?.tomo || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]?.dejo || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]?.totalHoras || "-" }}</td>
+                        <td colspan="6">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[today.toISOString().split('T')[0]]?.observaciones || "-" }}</td>
                     </tr>
-                    <tr class='custom-orange' v-if="personal.viewDetail && tarjetaPersonalSinDiagramaIndexado[personal.legajo] && tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes && tarjetaPersonalSinDiagramaIndexado[personal.legajo].mes">
+                    <tr class='custom-orange' v-if="
+                        personal.viewDetail && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo] && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.mes && 
+                        tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]">
                     <!-- <tr class='custom-orange' v-if="personal.viewDetail && tarjetaPersonalSinDiagramaIndexado[personal.legajo].meses[selectedMonth]"> -->
                         <td colspan="1">{{ new Date(tomorrowStr+'T12:00').toLocaleDateString() }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[tomorrowStr].tren }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[tomorrowStr].disponibleHora }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[tomorrowStr].tomo }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[tomorrowStr].dejo }}</td>
-                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[tomorrowStr].totalHoras }}</td>
-                        <td colspan="6">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo].days[tomorrowStr].observaciones }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]?.tren || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]?.disponibleHora || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]?.tomo || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]?.dejo || "-" }}</td>
+                        <td colspan="1">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]?.totalHoras || "-" }}</td>
+                        <td colspan="6">{{ tarjetaPersonalSinDiagramaIndexado[personal.legajo]?.days?.[tomorrowStr]?.observaciones || "-" }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -438,9 +450,7 @@ export default defineComponent({
             try {
                 const res = await getTarjetaPersonalesSinDiagrama();
                 this.tarjetasPersonalesSinDiagrama = res.data;
-                console.log(this.tarjetasPersonalesSinDiagrama);
                 this.tarjetaPersonalSinDiagramaIndexado = this.indexarTarjetasPersonalesSinDiagrama(this.tarjetasPersonalesSinDiagrama)
-                console.log(this.tarjetaPersonalSinDiagramaIndexado);
 
             } catch (error) {
                 this.handleRequestError(error as AxiosError);
