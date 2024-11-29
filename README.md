@@ -1,18 +1,23 @@
-# Vue 3 + TypeScript + Vite
+GNPA - Gestion de Novedades del Personal de Abordo
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Introducción:
+El Gestor de Novedades de Personal de Abordo representa un hito en la gestión integral del
+área, concebido y materializado por personal idóneo del Puesto Control Trenes de la línea
+Roca. Este sistema, guiado por los estándares del manual de procedimientos de operaciones
+(OPE.30.20.10.30), surge como una evolución significativa en el seguimiento y registro de
+novedades relacionadas con el personal de abordo. Inspirado en la visión pionera de
+herramientas como el buscador de trenes ideado anteriormente por mí, Luciano Vidal y el
+Sistema de Información para la Gestión del Personal de Abordo (SIPA) desarrollado por el 
+sub gerente de transporte, Ingeniero Hourcade Lucas, el Gestor de Novedades amalgama la
+experiencia acumulada con las necesidades específicas del contexto operativo de la línea Roca.
+Es importante reconocer el valioso respaldo brindado por el Licenciado Córdoba Ricardo, cuya
+contribución fue fundamental para la realización de este proyecto.
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
-
-## Type Support For `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
-
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
-
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+Descripción del Sistema:
+El Gestor de Novedades de Personal de Abordo se ha diseñado como una herramienta integral
+para la gestión cotidiana del personal de abordo, así como para el registro preciso de todos los
+eventos relevantes relacionados con dicho personal. Para lograr esto, el sistema se compone de
+varias herramientas accesibles según los tres tipos de roles asignados, cada uno con sus
+respectivos niveles de permisos: Usuario, Supervisor y Administrador.
+Los roles están diseñados de manera inclusiva en términos de permisos, siendo el rol de
+Usuario el menos permisivo y el rol de Administrador el más permisivo
