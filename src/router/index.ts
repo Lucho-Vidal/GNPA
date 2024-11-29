@@ -152,8 +152,9 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
-        path: "/editNovedades/:id?",
+        path: "/editNovedades/:id?/:legajo?",
         name: "NewNovedades",
+        props: true,
         meta: { title: "GNPA - Nueva Novedad" },
         component: () => import("@/components/novedades/NewNovedades.vue"),
         beforeEnter: (to, from, next) => {
