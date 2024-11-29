@@ -33,7 +33,7 @@
         
         <!-- Modal de búsqueda -->
         <div>
-            <div class="modal" :class="{ 'd-block': mostrarModalSearch }"  @click.self="cerrarModal">
+            <div class="modal" :class="{ 'd-block': mostrarModalSearch }"  @click.self="cerrarModal" @keyup.esc="cerrarModal">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -109,15 +109,10 @@
             </div>
         </div>
         <div>
-            <button
-                class="btn btn-success btn-buscar-personal"
-                @click="abrirModal(false)"
-            >
-                Buscar Personal
-            </button>
+            <button class="btn btn-success btn-buscar-personal" @click="abrirModal(false)">Buscar Personal</button>
         </div>
         <!-- Formulario -->
-        <form @submit.prevent="saveNovedad()" @keydown.enter.prevent="">
+        <form @submit.prevent="saveNovedad()" @keydown.enter.prevent="moverAlSiguienteElemento($event)">
             <div class="justify-content-between row">
                 <div class="col-2">
                     <label for="legajo"></label>
@@ -271,6 +266,7 @@
                         //sin efecto en el estadistico
                         <optgroup label="Sin efecto en el estadistico">
                             <option value="Practica">Practica via</option>
+                            <option value="Sin Apto">Sin apto</option>
                             <option value="Revision Medica">Revision Medica</option>
                             <option value="Baja definitiva">Baja definitiva</option>
                         </optgroup>
@@ -287,6 +283,7 @@
                         type="Date"
                         name="fechaBaja"
                         v-model="novedad.fechaBaja"
+                        @change="validaPersonalConNovedadActiva(novedad.legajo)"
                     />
                 </div>
                 <div class="form-check form-check-inline m-0">
@@ -373,20 +370,12 @@
                                 name="legajo"
                                 class="form-control mb-3"
                                 v-model="remplazo.legajo"
-                                @change="
-                                    asignarRelevoPorLegajo(remplazo.legajo,index)
-                                "
+                                @change="asignarRelevoPorLegajo(remplazo.legajo,index)"
                             />
                         </td>
-                        <td>
-                            {{ remplazo.apellido }}
-                        </td>
-                        <td>
-                            {{ remplazo.nombres }}
-                        </td>
-                        <td>
-                            {{ remplazo.especialidad }}
-                        </td>
+                        <td>{{ remplazo.apellido }}</td>
+                        <td>{{ remplazo.nombres }}</td>
+                        <td>{{ remplazo.especialidad }}</td>
                         <td>
                             <input
                                 required
@@ -394,6 +383,7 @@
                                 type="Date"
                                 name="FechaBaja"
                                 v-model="remplazo.inicioRelevo"
+                                @change="validaPersonalConNovedadActiva(remplazo.legajo)"
                             />
                         </td>
                         <td>
@@ -438,8 +428,10 @@ import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
 import { Registro } from "../../interfaces/IRegistro";
 import { createRegistro } from "../../services/registrosService";
+import { esFechaMayor, seSolapanFechas } from "../../utils/fechas";
 
 export default defineComponent({
+    props: ['id', 'legajo'],
     data() {
         return {
             novedades: [] as Novedad[],
@@ -460,7 +452,6 @@ export default defineComponent({
             search: "" as string,
             selectRemplazo: false,
             personalEncontrado: [] as IPersonal[],
-            //alerta: "" as string,
             mostrarModalSearch: false,
             cantDias: 1,
             idNovedad: 0,
@@ -472,6 +463,7 @@ export default defineComponent({
                 title: "",
                 message: "",
             },
+
         };
     },
     watch: {
@@ -497,6 +489,25 @@ export default defineComponent({
             const fromRoute = localStorage.getItem('fromRoute') || '/novedades'; // Recuperar la ruta o usar 'novedades'
             localStorage.removeItem('fromRoute')
             this.$router.push(fromRoute);
+        },
+        moverAlSiguienteElemento(event: KeyboardEvent) {
+            event.preventDefault();
+            const focusable = Array.from(
+                document.querySelectorAll<HTMLElement>(`button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])`)
+            )
+            .filter((el, index) => !el.hasAttribute('disabled') && index >= 13);
+            let currentIndex = focusable.indexOf(event.target as HTMLElement);
+            
+            if(currentIndex === focusable.length -1) {
+                currentIndex = 0 
+            }
+
+            // Encuentra el siguiente elemento habilitado y focusable
+            const siguienteElemento = focusable.slice(currentIndex + 1).find(el => el);
+
+            if (siguienteElemento) {
+                siguienteElemento.focus();
+            }
         },
         // Conexión con la API
         async obtenerUltimoId() {
@@ -532,7 +543,17 @@ export default defineComponent({
                     this.message.activo = false;
                     this.actualizarRelevo();
                 }
-
+                console.log(
+                    this.esInicioRelevoMayorIgualFechaBaja() ||
+                    this.esFinRelevoMayorFinNovedad() ||
+                    this.hayMasDeUnRelevo() ||
+                    this.esFechaBajaMayorFechaAlta() ||
+                    this.message.activo
+                )
+                console.log(this.esInicioRelevoMayorIgualFechaBaja(),this.esFinRelevoMayorFinNovedad(),this.hayMasDeUnRelevo(),
+                    this.esFechaBajaMayorFechaAlta() ,
+                    this.message.activo
+                )
                 if (
                     this.esInicioRelevoMayorIgualFechaBaja() ||
                     this.esFinRelevoMayorFinNovedad() ||
@@ -560,27 +581,18 @@ export default defineComponent({
 
                 let accion = ""
                 // Crear la novedad
-                if (this.$route.params.id && typeof this.$route.params.id === "string") {
+                
+                if (this.$route.params.id && this.$route.params.id !== 'undefined' && typeof this.$route.params.id === "string") {
                     accion = "Edito"
                     await updateNovedad(this.novedad._id, this.novedad);
                 } else {
                     this.ultimoId++;
                     this.novedad._id = this.ultimoId;
-                    console.log(this.novedad._id);
                     this.novedad.fecha = this.today.toISOString().split("T")[0];
                     this.novedad.novedadInactiva = false;
                     accion = "Creo"
                     await createNovedad(this.novedad);
                 }
-                if(this.novedad.turno.toLowerCase().includes('ciclo')){
-                    //TODO guarda en la tarjeta correspondiente
-                    
-                    console.log('TODO guardar en la tarjeta correspondiente');
-                }
-                if(this.novedad?.remplazo.length > 0){
-                    console.log('TODO guardar en la tarjeta correspondiente');
-                }
-
                 // guardamos registro
                 const registro: Registro = {
                     usuario: window.localStorage.getItem("username") || "",
@@ -591,7 +603,7 @@ export default defineComponent({
                 await createRegistro(registro);
 
                 // Redireccionar
-                // this.goBack()
+                this.goBack()
             } catch (error) {
                 this.handleRequestError(error as AxiosError);
             }
@@ -690,36 +702,11 @@ export default defineComponent({
             }
         },
         // Validaciones:
-        esFechaMayor(dateMayor: string, dateMenor: string) {
-            if (dateMayor && dateMenor) {
-                const formattedDateMayor = new Date(dateMayor)
-                    .toISOString()
-                    .split("T")[0];
-                const formattedDateMenor = new Date(dateMenor)
-                    .toISOString()
-                    .split("T")[0];
-                return formattedDateMayor > formattedDateMenor;
-            } else {
-                return false;
-            }
-        },
-        esFechaMayorIgual(dateMayor: string, dateMenor: string) {
-            if (dateMayor && dateMenor) {
-                const formattedDateMayor = new Date(dateMayor)
-                    .toISOString()
-                    .split("T")[0];
-                const formattedDateMenor = new Date(dateMenor)
-                    .toISOString()
-                    .split("T")[0];
-                return formattedDateMayor >= formattedDateMenor;
-            } else {
-                return false;
-            }
-        },
+        
         esInicioRelevoMayorIgualFechaBaja() {
             if (this.novedad.remplazo !== undefined && this.novedad.remplazo.length > 0) {
                 
-                if (this.esFechaMayor(
+                if (esFechaMayor(
                         this.novedad.fechaBaja,
                         this.novedad.remplazo?.[0].inicioRelevo
                     )
@@ -737,13 +724,8 @@ export default defineComponent({
             }
         },
         esFechaBajaMayorFechaAlta() {
-            if (this.novedad.fechaAlta !== undefined) {
-                if (
-                    this.esFechaMayor(
-                        this.novedad.fechaBaja,
-                        this.novedad.fechaAlta
-                    )
-                ) {
+            if (!this.novedad.HNA) {
+                if (esFechaMayor(this.novedad.fechaBaja,this.novedad.fechaAlta)) {
                     this.message.message =
                         "La fecha de fin de la novedad no puede ser anterior a la del inicio de la novedad";
                     this.message.activo = true;
@@ -771,7 +753,7 @@ export default defineComponent({
             }
             if (this.novedad.fechaAlta) {
                 if (
-                    this.esFechaMayor(
+                    esFechaMayor(
                         this.novedad.remplazo[
                             this.novedad.remplazo.length - 1
                         ].finRelevo,
@@ -795,7 +777,7 @@ export default defineComponent({
                     }
 
                     if (
-                        this.esFechaMayor(
+                        esFechaMayor(
                             this.novedad.remplazo[i].finRelevo,
                             this.novedad.remplazo[i + 1].inicioRelevo
                         )
@@ -831,6 +813,122 @@ export default defineComponent({
                 }
             }
         },
+        validaPersonalConNovedadActiva(legajo: number|null,index: number|null = null):void {
+            /*
+            Esta función se llama cuando 
+                1) se asigna un personal a la novedad 
+                2) se asigna el personal como relevo de la novedad.
+                3) que el personal que se asigna al relevo no sea el mismo de la novedad
+            En el 1er caso se debe chequear 
+                a) que no este de baja en ninguna novedad activa dentro del rango de fechas de la novedad 
+
+            En el 2do caso se debe chequear 
+                a) que no este de baja en ninguna novedad activa dentro del rango de fechas de la novedad
+                b) que no este relevando ninguna novedad activa dentro del rango de fechas de la novedad
+            */
+            this.message.activo = false;
+            let estaDeBaja = false;
+            const personal = this.personales.find((p: IPersonal) => p.legajo === legajo);
+            if (!personal) {
+                console.warn("No se encontró el personal con el legajo proporcionado.");
+                return;
+            }
+            
+            // Recorre las novedades para aplicar las validaciones
+            const novedadEncontrada = this.novedades.some((novedadRegistrada:Novedad)=>{
+                // Caso 1                
+                // Validación para evitar que el personal tenga otra novedad activa inclusive si es de ciclo
+                if (novedadRegistrada.legajo === personal.legajo && this.idParam !== novedadRegistrada._id && !novedadRegistrada.novedadInactiva){ 
+
+                    // Variables inicializadas
+                    const inicio1: string = novedadRegistrada.fechaBaja;
+                    const fin1: string = novedadRegistrada.fechaAlta;
+                    const hna1: boolean = novedadRegistrada.HNA;
+                    const inicio2: string = this.novedad.fechaBaja;
+                    const fin2: string = this.novedad.fechaAlta;
+                    const hna2: boolean = this.novedad.HNA;  
+                    
+                    estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
+
+                    const fechaBaja = new Date(novedadRegistrada.fechaBaja).toLocaleDateString();
+                    const fechaAlta = novedadRegistrada.fechaAlta
+                        ? new Date(novedadRegistrada.fechaAlta).toLocaleDateString()
+                        : "HNA";
+
+                    const mensaje = `Este personal ${personal.apellido} ${personal.nombres} se encuentra de baja por la siguiente novedad N°${novedadRegistrada._id}.
+                    Desde: ${fechaBaja} Hasta: ${fechaAlta}
+                    Por favor, finalice la novedad para poder continuar`;
+                    
+                    this.activarAlerta(
+                        estaDeBaja,
+                        "Personal de baja",
+                        mensaje,
+                        "danger"
+                    )
+                }
+                if (estaDeBaja) {
+                    this.idNovedad = novedadRegistrada._id;
+                    return true
+                }
+
+                // Caso 2
+                // si el personal de baja es de ciclo se busca que no este relevando
+                if (personal.turno.toLowerCase().includes("ciclo") && novedadRegistrada.remplazo.some(remp=> remp.legajo === personal.legajo ) && !novedadRegistrada.novedadInactiva){
+
+                    // Variables inicializadas
+                    let inicio1: string = "";
+                    let fin1: string = "";
+                    let hna1: boolean = false;
+                    let inicio2: string = "";
+                    let fin2: string = "";
+                    let hna2: boolean = false;          
+                    
+                    // Extraer datos comunes
+                    const remplazo = novedadRegistrada.remplazo.find(remp => remp.legajo === personal.legajo);
+
+                    // Información del primer rango (remplazo registrada)
+                    inicio1 = remplazo?.inicioRelevo || "";
+                    fin1 = remplazo?.finRelevo || "";
+                    hna1 = !fin1;
+
+                    if(index == null){
+                        // Información del segundo rango (novedad actual)
+                        inicio2 = this.novedad.fechaBaja;
+                        fin2 = this.novedad.fechaAlta;
+                        hna2 = this.novedad.HNA;
+                    }else{
+                        // Información del segundo rango (novedad actual)
+                        inicio2 = this.novedad.remplazo[index].inicioRelevo
+                        fin2 = this.novedad.remplazo[index].finRelevo
+                        hna2 = !fin2;
+                    }
+                    estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    
+                    const fechaBaja = new Date(novedadRegistrada.fechaBaja).toLocaleDateString();
+                    const fechaAlta = novedadRegistrada.fechaAlta
+                        ? new Date(novedadRegistrada.fechaAlta).toLocaleDateString()
+                        : "HNA";
+                    const mensaje = `El personal ${personal.apellido} ${personal.nombres} se encuentra relevando la novedad N°${novedadRegistrada._id}.
+                    Desde: ${fechaBaja} Hasta: ${fechaAlta}
+                    Por favor, finalice la novedad para poder continuar`;
+
+                    this.activarAlerta(
+                        estaDeBaja,
+                        "Personal relevando",
+                        mensaje,
+                        "warning"
+                    )
+                }
+                if (estaDeBaja) {
+                    this.idNovedad = novedadRegistrada._id;
+                    return true
+                }
+                return false
+            });
+            if (!novedadEncontrada) {
+                console.log("No se encontraron novedades activas o relevos conflictivos para este personal.");
+            } 
+        },
         activarAlerta(activarNovedad:boolean,title:string,message:string,status:string){
             if (activarNovedad) {
                 this.message.title = title
@@ -839,73 +937,6 @@ export default defineComponent({
                 this.message.activo = activarNovedad;
                 this.cicloRelevando = activarNovedad;
             }
-        },
-        validarRelevoConNovedadActiva(novedad:Novedad,legajo:number):boolean{
-            return !novedad.novedadInactiva &&
-                novedad.remplazo.some(
-                    (remp: Remplazo) =>
-                        remp &&
-                        (!remp.finRelevo ||
-                            this.esFechaMayorIgual(
-                                remp.finRelevo,
-                                this.today.toISOString()
-                            )) &&
-                        remp.legajo === legajo 
-            );
-        },
-        validarPersonalConNovedadActiva(novedad:Novedad):boolean{
-            return !novedad.novedadInactiva &&
-                ((novedad.HNA &&
-                    this.esFechaMayorIgual(
-                        this.today.toString(),
-                        novedad.fechaBaja
-                    )) ||
-                    (this.esFechaMayorIgual(
-                        this.today.toString(),
-                        novedad.fechaBaja
-                    ) &&
-                        this.esFechaMayorIgual(
-                            novedad.fechaAlta,
-                            this.today.toString()
-                        )));
-        },
-        validaPersonalConNovedadActiva(personal: IPersonal) {
-            //TODO no esta encontrando a un personal de ciclo que esta relevando y se lo va a carga en otra novedad 16406 Doval 369.385
-            this.novedades.find((novedad:Novedad)=>{
-                if (personal.turno.toLowerCase().includes("ciclo")){// si el personal de baja es de ciclo se busca que no este relevando
-                    const tieneRelevoActivo = this.validarRelevoConNovedadActiva(novedad,personal.legajo)
-                    
-                    this.activarAlerta(
-                        tieneRelevoActivo,
-                        "Personal relevando",
-                        `El personal ${personal.apellido} ${personal.nombres} se encuentra relevando la novedad N°${novedad._id}. 
-                        Si desea proceder se finalizara su relevo automáticamente. `,
-                        "warning"
-                    )
-                    
-                    if (tieneRelevoActivo) {
-                        this.idNovedad = novedad._id;
-                        return true
-                    }
-                }
-                if (novedad.legajo === personal.legajo && this.idParam !== novedad._id){ // se busca que no tenga una novedad activa y distinta a la actual
-                    const estaDeBaja = this.validarPersonalConNovedadActiva(novedad)
-                    
-                    this.activarAlerta(
-                        estaDeBaja,
-                        "Personal de baja",
-                        `Este personal ${personal.apellido} ${personal.nombres} se encuentra de baja por la siguiente novedad N°${novedad._id}. 
-                            Por favor, finalice el relevo para poder continuar`,
-                        "danger"
-                    )
-
-                    if (estaDeBaja) {
-                        this.idNovedad = novedad._id;
-                        return true
-                    }
-                }
-                return false
-            })
         },
         // Funcionamiento del Formulario
         agregarRemplazo() {
@@ -954,6 +985,8 @@ export default defineComponent({
                         .toISOString()
                         .split("T")[0];
                 }
+                this.validaPersonalConNovedadActiva(this.novedad.legajo)
+
             } catch (error) {
                 console.error(error)
             }
@@ -1032,34 +1065,45 @@ export default defineComponent({
             this.message.message = "";
             this.message.status = "";
             this.message.activo = false;
-            const [personalEncontrado] = this.personales.filter(
-                (personal: IPersonal) => {
+            const personalEncontrado = this.personales.find((personal: IPersonal) => {
                     return personal.legajo == this.novedad.legajo;
                 }
             );
             if (personalEncontrado) {
-                this.validaPersonalConNovedadActiva(personalEncontrado);
+                this.validaPersonalConNovedadActiva(personalEncontrado.legajo);
                 this.novedad.apellido = personalEncontrado.apellido;
                 this.novedad.nombres = personalEncontrado.nombres;
                 this.novedad.base = personalEncontrado.dotacion;
                 this.novedad.especialidad = personalEncontrado.especialidad;
                 this.novedad.turno = personalEncontrado.turno;
-                this.novedad.franco = this.days[
-                    personalEncontrado.franco
-                ];
-                /* this.novedad.fechaBaja = this.today
-                    .toISOString()
-                    .split("T")[0]; */
+                this.novedad.franco = this.days[personalEncontrado.franco];
+                this.novedad.fechaBaja = this.novedad.fechaBaja || this.today.toISOString().split("T")[0];
+            }else{
+                this.novedad.apellido = '';
+                this.novedad.nombres = '';
+                this.novedad.base = '';
+                this.novedad.especialidad = '';
+                this.novedad.turno = '';
+                this.novedad.franco = '';
+                // this.novedad.fechaBaja = '';
             }
         },
         asignarRelevoPorLegajo(legajo: number|null, index: number) {
             // al haber un cambio en el formulario remplazo.legajo se agregan el resto de los datos
-            const [personalEncontrado] = this.personales.filter((personal: IPersonal) => {
+            const personalEncontrado = this.personales.find((personal: IPersonal) => {
                     return personal.legajo == legajo;
             });
-
+            if (personalEncontrado?.legajo === this.novedad.legajo){
+                this.activarAlerta(
+                        true,
+                        "Personal repetido",
+                        `El personal ${personalEncontrado.apellido} ${personalEncontrado.nombres} es el titular de esta novedad, por ello no puede ser asignado como relevo.`,
+                        "danger"
+                    )
+                return
+            }
             if (personalEncontrado) {
-                this.validaPersonalConNovedadActiva(personalEncontrado);
+                this.validaPersonalConNovedadActiva(personalEncontrado.legajo,index);
                 
                 this.novedad.remplazo[index].legajo = personalEncontrado.legajo;
                 this.novedad.remplazo[index].apellido = personalEncontrado.apellido;
@@ -1076,19 +1120,29 @@ export default defineComponent({
             }
         },
     },
-    mounted() {
+    async mounted() {
         try {
-            this.loadPersonales();
-            if (this.$route.params.id && typeof this.$route.params.id === "string") {
+            await this.loadPersonales();
+            
+            if (this.$route.params.id && typeof this.$route.params.id === "string" && this.$route.params.id !== 'undefined') {
                 this.titulo = "Editar novedad"
                 this.idParam = parseInt(this.$route.params.id)
-                this.loadNovedad(this.idParam);
+                await this.loadNovedad(this.idParam);
             }else{
-                this.titulo = "Cargar nueva novedad"
-                this.obtenerUltimoId();
+                this.titulo = "Cargar nueva novedad"                
+                if(this.$route.params.legajo !== '' && this.$route.params.legajo !== 'undefined' && typeof this.$route.params.legajo === "string"){
+                    this.novedad.legajo = parseInt(this.$route.params.legajo);                    
+                    this.searchPersonalPorLegajo()
+                    const tipoNovedadSelect = document.getElementById("tipoNovedad") as HTMLElement;
+                    tipoNovedadSelect.focus();
+                }
+                await this.obtenerUltimoId();
             }
             this.loadNovedades();
+            this.novedad.fechaBaja = new Date().toISOString().split("T")[0]
             this.novedad.HNA = true;
+            // Obtener todos los elementos enfocados
+            
             newToken();
         } catch (error) {
             console.error(error);
