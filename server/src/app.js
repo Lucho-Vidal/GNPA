@@ -28,7 +28,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 const corsOptions = {
-    origin: ["http://172.22.108.54:5173","http://localhost:5173"],
+    origin: ["http://172.22.108.43:5173","http://localhost:5173"],
     // origin: "http://localhost:8080", // Reemplaza con la URL de tu frontend
     // origin: "http://172.22.108.29:5173/", // Reemplaza con la URL de tu frontend
     // origin: ["http://localhost:5173","http://localhost:8080","https://gnpa-trenesargentinos.web.app"], // Reemplaza con la URL de tu frontend
