@@ -312,15 +312,7 @@
                                 ).toLocaleDateString()
                             }}
                         </td>
-                        <td class="col-1">
-                            {{
-                                !novedad.HNA
-                                    ? new Date(
-                                          novedad.fechaAlta + " 12:00"
-                                      ).toLocaleDateString()
-                                    : ""
-                            }}
-                        </td>
+                        <td class="col-1">{{!novedad.HNA ? new Date(novedad.fechaAlta + " 12:00").toLocaleDateString(): ""}}</td>
                         <td class="col-1">
                             <i
                                 v-if="!novedad.novedadInactiva"
@@ -514,11 +506,7 @@ export default defineComponent({
             this.$router.push(`/editNovedades/${id}`);
         },
         viewDetail(novedad: Novedad) {
-            if (novedad.viewDetail) {
-                novedad.viewDetail = false;
-            } else {
-                novedad.viewDetail = true;
-            }
+            novedad.viewDetail = !novedad.viewDetail;
         },
         obtenerNumeroDia(dia: string) {
             const diasDeLaSemana = [
