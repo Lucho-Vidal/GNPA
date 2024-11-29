@@ -16,6 +16,131 @@
                 {{ message.message }}
             </div>
         </div>
+        <!-- Modal de búsqueda -->
+        <div>
+            <div class="modal" :class="{ 'd-block': mostrarModalSearch }"  @click.self="cerrarModal" @keyup.esc="cerrarModal">
+                <div class="modal-dialog modal-ancho-personalizado">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Asignar Relevo</h5>
+                            <button
+                                type="button"
+                                class="close btn btn-danger"
+                                @click="cerrarModal"
+                            >
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            
+                            <div class="table-container">
+                                <table
+                                    v-if="novedadesFiltradas.length > 0"
+                                    class="table table-striped table-hover"
+                                >
+                                    <thead>
+                                        <tr>
+                                            <th class="col-1" colspan="1">Consecutivo</th>
+                                            <th class="col-1" colspan="1">Fecha</th>
+                                            <th class="col-1" colspan="1">Legajo</th>
+                                            <th class="col-1" colspan="1">Apellido</th>
+                                            <th class="col-1" colspan="1">Nombres</th>
+                                            <th class="col-1" colspan="1">Base</th>
+                                            <th class="col-1" colspan="1">Turno</th>
+                                            <th class="col-1" colspan="1">Franco</th>
+                                            <th class="col-1" colspan="1">Novedad</th>
+                                            <th class="col-1" colspan="1">Fecha de Baja</th>
+                                            <th class="col-1" colspan="1">Fecha de Alta</th>
+                                            <th class="col-1">Ver</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody
+                                        v-for="(novedad, index) in novedadesFiltradas"
+                                        :key="index"
+                                        @dblclick="
+                                            novedad.novedadInactiva ? null : goToNovedad(novedad._id)
+                                        "
+                                        @click="viewDetail(novedad)"
+                                    >
+                                        <tr
+                                            v-if="!novedad.novedadInactiva"
+                                            class="Small shadow"
+                                            :class="{
+                                                'fila-oscura': novedad.novedadInactiva,
+                                            }"
+                                        >
+                                            <td class="col-1">{{ novedad._id }}</td>
+                                            <td class="col-1">
+                                                {{
+                                                    novedad.fecha
+                                                        ? new Date(
+                                                            novedad.fecha + " 12:00"
+                                                        ).toLocaleDateString()
+                                                        : new Date(
+                                                            novedad.fechaBaja + " 12:00"
+                                                        ).toLocaleDateString()
+                                                }}
+                                            </td>
+                                            <td class="col-1">{{ novedad.legajo }}</td>
+                                            <td class="col-1">{{ novedad.apellido }}</td>
+                                            <td class="col-2">{{ novedad.nombres }}</td>
+                                            <td class="col-1">{{ novedad.base }}</td>
+                                            <td class="col-1">{{  novedad.turno }}</td>
+                                            <td class="col-1">{{ novedad.franco }}</td>
+                                            <td class="col-1">{{ novedad.tipoNovedad }}</td>
+                                            <td class="col-1">
+                                                {{
+                                                    new Date(
+                                                        novedad.fechaBaja + " 12:00"
+                                                    ).toLocaleDateString()
+                                                }}
+                                            </td>
+                                            <td class="col-1">
+                                                {{
+                                                    !novedad.HNA
+                                                        ? new Date(
+                                                            novedad.fechaAlta + " 12:00"
+                                                        ).toLocaleDateString()
+                                                        : ""
+                                                }}
+                                            </td>
+                                            <td class="col-1">
+                                                <i
+                                                    v-if="!novedad.novedadInactiva"
+                                                    class="material-icons cursor-hand"
+                                                    @click="goToNovedad(novedad._id)"
+                                                >
+                                                    edit_note
+                                                </i>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="novedad.viewDetail">
+                                            <td colspan="12">
+                                                <div class="row" v-if="novedad.remplazo[0]">
+                                                    <h6 class="col-1">Releva:</h6>
+                                                    <p class="col-3">{{novedad.remplazo[novedad.remplazo.length - 1].apellido +" " +novedad.remplazo[novedad.remplazo.length - 1].nombres}}</p>
+                                                    <h6 class="col-1">Desde:</h6>
+                                                    <p class="col-1">{{ (novedad.remplazo[novedad.remplazo.length - 1].inicioRelevo)}}</p>
+                                                    <h6 class="col-1">Hasta:</h6>
+                                                    <p class="col-1">{{ (novedad.remplazo[novedad.remplazo.length - 1].finRelevo)}}</p>
+                                                </div>
+                                                <div v-else>
+                                                    <h6>Sin Relevo</h6>
+                                                </div>
+                                                <div v-if="novedad.detalle">
+                                                    <h6>Detalle:</h6>
+                                                    <p>{{ novedad.detalle }}</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="container-fluid px-4">
             <h2 class="d-flex justify-content-start m-3">Linea Roca</h2>
             <h2 class="d-flex justify-content-end m-3">Registro de servicios personal sin diagrama C.C.P.T.</h2>
@@ -55,8 +180,10 @@
             </table>
         </div>
         <div class="barraBotones">
-            <button class="btn btn-danger mx-3" @click="salir">Cerrar sin Guardar</button>
+            <button class="btn btn-primary mx-3" @click="abrirModal()">Asignar Relevo</button>
+            <button class="btn btn-warning mx-3" @click="goToNovedad()">Alta Novedad</button>
             <button class="btn btn-success mx-3" @click="guardarTarjeta()" >Guardar Cambios</button>
+            <button class="btn btn-danger mx-3" @click="salir">Cerrar</button>
         </div>
         <div class="container-fluid">
             <table class="table table-bordered">
@@ -150,7 +277,7 @@
                         <!-- Observaciones -->
                         <td class="celdaInput layout" @click="toggleEdit('observaciones', index)">
                             
-                            <input v-if="getJornadaForDay( day).editable &&  editField === 'observaciones' && editIndex === index" 
+                            <input v-if=" editField === 'observaciones' && editIndex === index" 
                                     type="text" v-model="editValue" 
                                     :ref="'inputField-' + index" 
                                     @change="saveEdit('observaciones', index)">
@@ -160,7 +287,7 @@
                             </span>
                             <button class="btn btn-primary" v-if="getJornadaForDay(day).nroNovedad" 
                                 @click="goToNovedad(getJornadaForDay( day).nroNovedad)">
-                                Ir a la novedad
+                                Ir a la novedad <strong> {{ getJornadaForDay( day).nroNovedad }} </strong>
                             </button>
                         </td>
                     </tr>
@@ -176,7 +303,7 @@ import { defineComponent } from "vue";
 
 import {  loadNovedades, loadPersonal, loadPersonalSinDiagrama, loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from "../../utils/funciones";
 import { defaultJornada, defaultNovedad, defaultPersonal, defaultPersonalSinDiagrama, defaultTurnos, defaultTarjetaPersonalSinDiagrama} from '../../utils/interfacesDefault';
-import { itinerarioType, diaAnterior, diaPosterior, diferenciaHoras, dosDiasAnterior, esFechaMayorIgual,  obtenerNumeroDia,  sumarHoras} from '../../utils/fechas'
+import { itinerarioType, diaAnterior, diaPosterior, diferenciaHoras, dosDiasAnterior, esFechaMayorIgual,  obtenerNumeroDia,  sumarHoras, } from '../../utils/fechas'
 import { dia_laboral } from "../../utils/personal";
 import { filtrarPorTurno } from "../../utils/turnos";
 
@@ -198,6 +325,7 @@ export default defineComponent({
 
             lstNovedades: [] as Novedad[],
             lstTurnos: [] as ITurno[],
+            novedadesFiltradas: [] as Novedad[],
 
             novedades: [] as Novedad[],
             relevos: [] as Novedad[],
@@ -211,6 +339,7 @@ export default defineComponent({
             editIndex: null as number | null, // Índice de la fila en edición
             editValue: '' as string,          // Valor que se está editando
             cambioSinGuardar:false,
+            mostrarModalSearch:false,
 
             message: {
                 activo: false,
@@ -226,14 +355,10 @@ export default defineComponent({
                 if (this.tarjetaPersonalSinDiagrama.mes === '') {
                     this.tarjetaPersonalSinDiagrama.mes = this.selectedMonth; 
                 }
-                console.log(this.tarjetaPersonalSinDiagrama._id);
                 if(this.tarjetaPersonalSinDiagrama._id) {
-                    console.log("actualizo");
-                    
                     await updateTarjetaPersonalSinDiagrama(this.tarjetaPersonalSinDiagrama._id,this.tarjetaPersonalSinDiagrama)
                     this.message.message = 'Se ha actualizado la tarjeta satisfactoriamente!'
                 }else{
-                    console.log("creo");
                     await createTarjetaPersonalSinDiagrama(this.tarjetaPersonalSinDiagrama)
                     this.message.message = 'Se ha creado la tarjeta satisfactoriamente!'
                 }
@@ -296,30 +421,38 @@ export default defineComponent({
                 //tengo que verificar que las novedades estén actualizadas
                 this.fechasDelMes.forEach((fechaStr:string)=>{
                     const fecha = new Date(fechaStr + "T12:00");
-                    const  campoTren = this.tarjetaPersonalSinDiagrama.days[fechaStr].tren
+                    const campoTren = this.tarjetaPersonalSinDiagrama.days[fechaStr].tren;
                     if(campoTren !== '' && campoTren !== 'Orden' && campoTren !== 'DH anticipado'){
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].tren = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].disponibleHora = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].tomo = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].dejo = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].totalHoras = '';
-                        this.tarjetaPersonalSinDiagrama.days[fechaStr].observaciones = '';
+                        // this.tarjetaPersonalSinDiagrama.days[fechaStr].observaciones = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].editable = true;
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].estilo = false;
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].nroNovedad = null;
-                        //3 Calculamos jornada y relevos
-                        this.procesarRelevo(this.relevos, fechaStr, fecha);
-                        
-                        //4 Calculamos disponibilidad
-                        this.calcularDisponibilidad(fechaStr);
-
-                        //5 Verificamos si estuvo de baja por enfermedad
-                        this.procesarBajaPorEnfermedad(this.novedades, fechaStr);
                     }
+                    //3 Calculamos jornada y relevos
+                    this.procesarRelevo(this.relevos, fechaStr, fecha);
+                    
+                    //4 Calculamos disponibilidad
+                    this.calcularDisponibilidad(fechaStr);
 
-                })
-
+                    //5 Verificamos si estuvo de baja por enfermedad
+                    this.procesarBajaPorEnfermedad(this.novedades, fechaStr);
+                });
             }
+        },
+        abrirModal() {
+            this.mostrarModalSearch = true;
+            this.filtrarNovedades();
+        },
+        cerrarModal() {
+            this.mostrarModalSearch = false;
+        },
+        viewDetail(novedad: Novedad) {
+            novedad.viewDetail = !novedad.viewDetail;
         },
         salir(){
             if(this.cambioSinGuardar){
@@ -329,6 +462,19 @@ export default defineComponent({
                 }
             }
             this.$router.push('/personalSinDiagrama')
+        },
+        filtrarNovedades() {
+            this.novedadesFiltradas = this.lstNovedades.filter((novedad: Novedad) => {
+                    return (
+                        this.personal.dotacion === novedad.base &&
+                        this.personal.especialidad === novedad.especialidad &&
+                        this.personal.legajo !== novedad.legajo &&
+                        !novedad.novedadInactiva &&
+                        !novedad.turno.toLowerCase().includes('ciclo') &&
+                        (novedad.fechaAlta ? esFechaMayorIgual(novedad.fechaAlta, this.fechasDelMes[0]):true)
+                    );
+                }
+            );
         },
         daysInMonth() {
             const days = [];
@@ -380,9 +526,9 @@ export default defineComponent({
             // Retorna la jornada correspondiente al día
             return days[day];
         },
-        goToNovedad(nroNovedad:number|null) {
+        goToNovedad(nroNovedad?:number|null) {
             localStorage.setItem('fromRoute', this.$route.fullPath); // Guardar la ruta actual en localStorage
-            this.$router.push(`/editNovedades/${nroNovedad}`);
+            nroNovedad ? this.$router.push(`/editNovedades/${nroNovedad}`) : this.$router.push(`/editNovedades/${nroNovedad}/${this.personal.legajo}`)
         },
         diaSemanaStr(dia:number):string{
             const dias =[
@@ -561,6 +707,7 @@ export default defineComponent({
                 this.tarjetaPersonalSinDiagrama.days[dia].dejo = 'DH';
             } else {
                 const { tomo, dejo } = this.buscarJornadasDelTurno(dia, novedad.turno, jornada);
+
                 this.tarjetaPersonalSinDiagrama.days[dia].tomo = tomo;
                 this.tarjetaPersonalSinDiagrama.days[dia].dejo = dejo;
                 this.tarjetaPersonalSinDiagrama.days[dia].totalHoras = diferenciaHoras(tomo, dejo);
@@ -575,13 +722,13 @@ export default defineComponent({
                 ["Jul24"],// provisorio
                 nombreTurno
             );
-            let turno:ITurno = defaultTurnos();
             
+            let turno:ITurno = defaultTurnos();
             if (turnosEncontrados.length > 1) 
                 turno = turnosEncontrados.find((turno:ITurno) => turno.turno === `${nombreTurno}.${jornada}`) || defaultTurnos();
             else [turno] = turnosEncontrados
-            
-            return {tomo:turno.toma,dejo:turno.deja}
+                        
+            return turno ?  {tomo:turno.toma,dejo:turno.deja} :  {tomo: '',dejo: ''}
         },
         //4
         // Calcula la disponibilidad de una persona para un día específico.
@@ -589,6 +736,9 @@ export default defineComponent({
             const mes = this.tarjetaPersonalSinDiagrama.days;
             const especialidad = this.personal.especialidad.toLowerCase();
             this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = this.calcularDisponibilidadDiaAnterior(dia, mes, especialidad);
+            // if(esHoraMayor(this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora,this.tarjetaPersonalSinDiagrama.days[dia].dejo)){
+            //     this.tarjetaPersonalSinDiagrama.days[dia].estilo = true
+            // }
         },
         calcularDisponibilidadDiaAnterior(dia: string, mes: any, especialidad: string) {
             const diaAnt = mes[diaAnterior(dia + 'T12:00')];
@@ -606,6 +756,7 @@ export default defineComponent({
                 return '';
             }
         },
+
         // 5
         procesarBajaPorEnfermedad(novedades: Novedad[], dia: string) {
             novedades.forEach((novedad: Novedad) => {
@@ -705,6 +856,13 @@ input{
 /* .barraBotones > button{
     margin-top: 2px;
 } */
+.modal-content{
+    width: 100%;
+}
+.modal-ancho-personalizado {
+    max-width: 90%; /* Cambia el valor según lo necesites */
+}
+
 .dia{
     display:flex;
     justify-content: end;
