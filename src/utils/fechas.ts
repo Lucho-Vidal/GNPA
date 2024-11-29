@@ -497,3 +497,35 @@ export function formatearFecha(fechaString: string): string {
 
     return formatoFecha.format(fecha);
 }
+export function esHoraMayor(horaMayor: string, horaMenor: string): boolean {
+    const [horasMayor, minutosMayor] = horaMayor.split(':').map(Number);
+    const [horasMenor, minutosMenor] = horaMenor.split(':').map(Number);
+
+    if (horasMayor > horasMenor) {
+        return true;
+    } else if (horasMayor === horasMenor && minutosMayor > minutosMenor) {
+        return true;
+    }
+
+    return false;
+}
+/**
+ * Verifica si dos rangos de fechas se solapan.
+ * Si HNA está activo en cualquiera de los rangos, se considera que no tienen fecha de fin.
+ * se recomienda que en lo posible inicio1 y fin1 sean fechas anteriores a inicio2 y fin2
+ * en caso de lista novedades seria inicio1 y fin1, y la nueva novedad inicio2 y fin2
+ * 
+ * @param {string | null} inicio1 - Fecha de inicio del primer rango (YYYY-MM-DD)
+ * @param {string | null} fin1 - Fecha de fin del primer rango (YYYY-MM-DD) o null si HNA
+ * @param {boolean} HNA1 -  HNA es boolean 
+ * @param {string} inicio2 - Fecha de inicio del segundo rango (YYYY-MM-DD)
+ * @param {string | null} fin2 - Fecha de fin del segundo rango (YYYY-MM-DD) o null si HNA
+ * @param {boolean} HNA2 -  HNA es boolean 
+ * @returns {boolean} - Retorna true si los rangos se solapan
+ */
+export function seSolapanFechas(inicio1:string, fin1:string,HNA1:boolean, inicio2:string, fin2:string,HNA2:boolean) {
+    if (HNA1) fin1 = '9999-12-31'; // Rango infinito para HNA
+    if (HNA2) fin2 = '9999-12-31'; // Rango infinito para HNA
+
+    return esFechaMayorIgual(fin1, inicio2) && esFechaMayorIgual(fin2, inicio1);
+}
