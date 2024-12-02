@@ -294,6 +294,7 @@
                         id="HNA"
                         checked
                         v-model="novedad.HNA"
+                        @change="validaPersonalConNovedadActiva(novedad.legajo)"
                     />
                     <label class="form-check-label" for="HNA">HNA</label>
                 </div>
@@ -309,7 +310,7 @@
                         @change="calcularDiasNovedad(true)"
                     />
                 </div>
-                <div class="col-3" v-if="!novedad.HNA">
+                <div class="col-2" v-if="!novedad.HNA">
                     <label for="fechaAlta"></label>
                     Cantidad de días
                     <input
@@ -383,7 +384,7 @@
                                 type="Date"
                                 name="FechaBaja"
                                 v-model="remplazo.inicioRelevo"
-                                @change="validaPersonalConNovedadActiva(remplazo.legajo)"
+                                @change="validaPersonalConNovedadActiva(remplazo.legajo,index)"
                             />
                         </td>
                         <td>
@@ -392,6 +393,7 @@
                                 type="Date"
                                 name="FechaBaja"
                                 v-model="remplazo.finRelevo"
+                                @change="validaPersonalConNovedadActiva(remplazo.legajo,index)"
                             />
                         </td>
                         <td>
@@ -543,14 +545,11 @@ export default defineComponent({
                     this.message.activo = false;
                     this.actualizarRelevo();
                 }
+                
                 console.log(
-                    this.esInicioRelevoMayorIgualFechaBaja() ||
-                    this.esFinRelevoMayorFinNovedad() ||
-                    this.hayMasDeUnRelevo() ||
-                    this.esFechaBajaMayorFechaAlta() ||
-                    this.message.activo
-                )
-                console.log(this.esInicioRelevoMayorIgualFechaBaja(),this.esFinRelevoMayorFinNovedad(),this.hayMasDeUnRelevo(),
+                    this.esInicioRelevoMayorIgualFechaBaja(),
+                    this.esFinRelevoMayorFinNovedad(),
+                    this.hayMasDeUnRelevo(),
                     this.esFechaBajaMayorFechaAlta() ,
                     this.message.activo
                 )
@@ -596,7 +595,7 @@ export default defineComponent({
                 // guardamos registro
                 const registro: Registro = {
                     usuario: window.localStorage.getItem("username") || "",
-                    fecha: this.today.toString(),
+                    fecha: this.today.toLocaleString(),
                     accion: accion,
                     novedad: this.novedad,
                 };
@@ -663,16 +662,14 @@ export default defineComponent({
                     this.novedad.apellido +
                     " " +
                     this.novedad.nombres +
-                    " fue dado de baja por la novedad N*" +
-                    (this.ultimoId + 1);
+                    " fue dado de baja por la novedad N*" + (this.idParam ? this.idNovedad : this.ultimoId + 1);
             } else {
                 novedadesIndex[this.idNovedad].detalle =
                     "El Personal " +
                     this.novedad.apellido +
                     " " +
                     this.novedad.nombres +
-                    " fue dado de baja por la novedad N*" +
-                    (this.ultimoId + 1);
+                    " fue dado de baja por la novedad N*" + (this.idParam ? this.idNovedad : this.ultimoId + 1);
             }
             if (this.novedad.detalle) {
                 this.novedad.detalle =
@@ -745,10 +742,8 @@ export default defineComponent({
             if (this.novedad.remplazo.length === 0) {
                 return false;
             }
-            if (
-                this.novedad.remplazo[this.novedad.remplazo.length - 1]
-                    .finRelevo == ""
-            ) {
+            console.log(this.novedad.remplazo[this.novedad.remplazo.length - 1].finRelevo == "");
+            if (this.novedad.remplazo[this.novedad.remplazo.length - 1].finRelevo == "") {
                 return false;
             }
             if (this.novedad.fechaAlta) {
@@ -838,59 +833,23 @@ export default defineComponent({
             const novedadEncontrada = this.novedades.some((novedadRegistrada:Novedad)=>{
                 // Caso 1                
                 // Validación para evitar que el personal tenga otra novedad activa inclusive si es de ciclo
+                let mensaje: string="";
+                let estado: string="";
+                let titulo: string="";
+
+                let inicio1: string = "";
+                let fin1: string = "";
+                let hna1: boolean = false;    
+                let inicio2: string = "";
+                let fin2: string = "";
+                let hna2: boolean = false; 
+
                 if (novedadRegistrada.legajo === personal.legajo && this.idParam !== novedadRegistrada._id && !novedadRegistrada.novedadInactiva){ 
-
                     // Variables inicializadas
-                    const inicio1: string = novedadRegistrada.fechaBaja;
-                    const fin1: string = novedadRegistrada.fechaAlta;
-                    const hna1: boolean = novedadRegistrada.HNA;
-                    const inicio2: string = this.novedad.fechaBaja;
-                    const fin2: string = this.novedad.fechaAlta;
-                    const hna2: boolean = this.novedad.HNA;  
+                    inicio1 = novedadRegistrada.fechaBaja;
+                    fin1 = novedadRegistrada.fechaAlta;
+                    hna1 = novedadRegistrada.HNA;        
                     
-                    estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
-
-                    const fechaBaja = new Date(novedadRegistrada.fechaBaja).toLocaleDateString();
-                    const fechaAlta = novedadRegistrada.fechaAlta
-                        ? new Date(novedadRegistrada.fechaAlta).toLocaleDateString()
-                        : "HNA";
-
-                    const mensaje = `Este personal ${personal.apellido} ${personal.nombres} se encuentra de baja por la siguiente novedad N°${novedadRegistrada._id}.
-                    Desde: ${fechaBaja} Hasta: ${fechaAlta}
-                    Por favor, finalice la novedad para poder continuar`;
-                    
-                    this.activarAlerta(
-                        estaDeBaja,
-                        "Personal de baja",
-                        mensaje,
-                        "danger"
-                    )
-                }
-                if (estaDeBaja) {
-                    this.idNovedad = novedadRegistrada._id;
-                    return true
-                }
-
-                // Caso 2
-                // si el personal de baja es de ciclo se busca que no este relevando
-                if (personal.turno.toLowerCase().includes("ciclo") && novedadRegistrada.remplazo.some(remp=> remp.legajo === personal.legajo ) && !novedadRegistrada.novedadInactiva){
-
-                    // Variables inicializadas
-                    let inicio1: string = "";
-                    let fin1: string = "";
-                    let hna1: boolean = false;
-                    let inicio2: string = "";
-                    let fin2: string = "";
-                    let hna2: boolean = false;          
-                    
-                    // Extraer datos comunes
-                    const remplazo = novedadRegistrada.remplazo.find(remp => remp.legajo === personal.legajo);
-
-                    // Información del primer rango (remplazo registrada)
-                    inicio1 = remplazo?.inicioRelevo || "";
-                    fin1 = remplazo?.finRelevo || "";
-                    hna1 = !fin1;
-
                     if(index == null){
                         // Información del segundo rango (novedad actual)
                         inicio2 = this.novedad.fechaBaja;
@@ -903,24 +862,71 @@ export default defineComponent({
                         hna2 = !fin2;
                     }
                     estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    
-                    const fechaBaja = new Date(novedadRegistrada.fechaBaja).toLocaleDateString();
-                    const fechaAlta = novedadRegistrada.fechaAlta
-                        ? new Date(novedadRegistrada.fechaAlta).toLocaleDateString()
-                        : "HNA";
-                    const mensaje = `El personal ${personal.apellido} ${personal.nombres} se encuentra relevando la novedad N°${novedadRegistrada._id}.
-                    Desde: ${fechaBaja} Hasta: ${fechaAlta}
-                    Por favor, finalice la novedad para poder continuar`;
+                    // console.log("Caso 1");
+                    // console.log("novedad",novedadRegistrada._id);
+                    // console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    // console.log("estaDeBaja?",estaDeBaja);
+                    if (estaDeBaja) {
+                        const fechaBaja = new Date(novedadRegistrada.fechaBaja+"T12:00").toLocaleDateString();
+                        const fechaAlta = !novedadRegistrada.HNA ? new Date(novedadRegistrada.fechaAlta+"T12:00").toLocaleDateString(): "HNA";
+                        titulo = "Personal de baja";
+                        estado = "danger";
+                        mensaje = `Este personal ${personal.apellido} ${personal.nombres} se encuentra de baja por la siguiente novedad N°${novedadRegistrada._id}.
+                        Desde: ${fechaBaja} Hasta: ${fechaAlta}
+                        Por favor, finalice la novedad para poder continuar`;
+                    }
+                }
+                // Caso 2
+                // si el personal de baja es de ciclo se busca que no este relevando
+                if (!estaDeBaja && personal.turno.toLowerCase().includes("ciclo") && novedadRegistrada.remplazo.some(remp=> remp.legajo === personal.legajo ) && this.idParam !== novedadRegistrada._id && !novedadRegistrada.novedadInactiva){
 
-                    this.activarAlerta(
-                        estaDeBaja,
-                        "Personal relevando",
-                        mensaje,
-                        "warning"
-                    )
+                    // Extraer datos comunes
+                    const remplazo = novedadRegistrada.remplazo.find(remp => remp.legajo === personal.legajo);
+
+                    // Variables inicializadas
+                    inicio1 =  remplazo?.inicioRelevo || "";
+                    fin1 =  remplazo?.finRelevo || "";
+                    hna1  = !fin1;   
+                    
+                    if(index == null){
+                        // Información del segundo rango (novedad actual)
+                        inicio2 = this.novedad.fechaBaja;
+                        fin2 = this.novedad.fechaAlta;
+                        hna2 = this.novedad.HNA;
+                        legajo = this.novedad.legajo
+                    }else{
+                        // Información del segundo rango (novedad actual)
+                        inicio2 = this.novedad.remplazo[index].inicioRelevo
+                        fin2 = this.novedad.remplazo[index].finRelevo
+                        hna2 = !fin2;
+                        legajo = this.novedad.remplazo[index].legajo!
+
+                    }
+                    estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    // console.log("Caso 2");
+                    // console.log(legajo);
+
+                    // console.log("novedad",novedadRegistrada._id);
+                    // console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    // console.log("estaDeBaja?",estaDeBaja);
+                    if (estaDeBaja) {
+                        const fechaBaja = new Date(remplazo?.inicioRelevo+"T12:00").toLocaleDateString();
+                        const fechaAlta = remplazo?.finRelevo ? new Date(remplazo?.finRelevo+"T12:00").toLocaleDateString(): "HNA";
+                        titulo = "Personal relevando";
+                        estado = "warning";
+                        mensaje = `El personal ${personal.apellido} ${personal.nombres} se encuentra relevando la novedad N°${novedadRegistrada._id}.
+                        Desde: ${fechaBaja} Hasta: ${fechaAlta}
+                        Por favor, finalice la novedad para poder continuar`;
+                    }
                 }
                 if (estaDeBaja) {
                     this.idNovedad = novedadRegistrada._id;
+                    this.activarAlerta(
+                        estaDeBaja,
+                        titulo,
+                        mensaje,
+                        estado
+                    )
                     return true
                 }
                 return false
@@ -1128,6 +1134,7 @@ export default defineComponent({
                 this.titulo = "Editar novedad"
                 this.idParam = parseInt(this.$route.params.id)
                 await this.loadNovedad(this.idParam);
+                !this.novedad.HNA ? this.calcularDiasNovedad(true) : ""
             }else{
                 this.titulo = "Cargar nueva novedad"                
                 if(this.$route.params.legajo !== '' && this.$route.params.legajo !== 'undefined' && typeof this.$route.params.legajo === "string"){
@@ -1137,10 +1144,10 @@ export default defineComponent({
                     tipoNovedadSelect.focus();
                 }
                 await this.obtenerUltimoId();
+                this.novedad.fechaBaja = new Date().toISOString().split("T")[0]
+                this.novedad.HNA = true;
             }
             this.loadNovedades();
-            this.novedad.fechaBaja = new Date().toISOString().split("T")[0]
-            this.novedad.HNA = true;
             // Obtener todos los elementos enfocados
             
             newToken();
