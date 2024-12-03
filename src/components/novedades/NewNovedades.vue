@@ -862,10 +862,10 @@ export default defineComponent({
                         hna2 = !fin2;
                     }
                     estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    console.log("Caso 1");
-                    console.log("novedad",novedadRegistrada._id);
-                    console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    console.log("estaDeBaja?",estaDeBaja);
+                    // console.log("Caso 1");
+                    // console.log("novedad",novedadRegistrada._id);
+                    // console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    // console.log("estaDeBaja?",estaDeBaja);
                     if (estaDeBaja) {
                         const fechaBaja = new Date(novedadRegistrada.fechaBaja+"T12:00").toLocaleDateString();
                         const fechaAlta = !novedadRegistrada.HNA ? new Date(novedadRegistrada.fechaAlta+"T12:00").toLocaleDateString(): "HNA";
@@ -904,12 +904,12 @@ export default defineComponent({
     
                         }
                         estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                        console.log("Caso 2");
-                        console.log(legajo);
-                        console.log("novedad",novedadRegistrada._id);
-                        console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                        console.log("estaDeBaja?",estaDeBaja);
+                    // console.log("Caso 2");
+                    // console.log(legajo);
 
+                    // console.log("novedad",novedadRegistrada._id);
+                    // console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    // console.log("estaDeBaja?",estaDeBaja);
                         if (estaDeBaja) {
                             const fechaBaja = new Date(remp?.inicioRelevo+"T12:00").toLocaleDateString();
                             const fechaAlta = remp?.finRelevo ? new Date(remp?.finRelevo+"T12:00").toLocaleDateString(): "HNA";
