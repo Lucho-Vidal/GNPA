@@ -85,7 +85,7 @@
                                             <td class="col-1">{{ novedad.apellido }}</td>
                                             <td class="col-2">{{ novedad.nombres }}</td>
                                             <td class="col-1">{{ novedad.base }}</td>
-                                            <td class="col-1">{{  novedad.turno }}</td>
+                                            <td class="col-1">{{ novedad.turno }}</td>
                                             <td class="col-1">{{ novedad.franco }}</td>
                                             <td class="col-1">{{ novedad.tipoNovedad }}</td>
                                             <td class="col-1">
@@ -206,7 +206,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(day, index) in fechasDelMes" :key="index" :class="{ 'text-red': getJornadaForDay( day).estilo }">
+                    <tr v-for="(day, index) in fechasDelMes" :key="index" :class="{ 'text-red': getJornadaForDay( day).deBaja }">
                         <td class="dia">{{   getDiaSemanaYMes(day,index) }}</td>
                         <!-- Columna Diagrama -->
                         <td class="celdaInput " @click="toggleEdit('tren', index)">
@@ -430,6 +430,8 @@ export default defineComponent({
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].totalHoras = '';
                         // this.tarjetaPersonalSinDiagrama.days[fechaStr].observaciones = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].editable = true;
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].deBaja = true;
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].relevando = true;
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].estilo = false;
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].nroNovedad = null;
                     }
@@ -658,20 +660,36 @@ export default defineComponent({
         },
         //2
         calcularFranco(dia: string, fecha: Date) {
+            const diaAnt = diaAnterior(dia + "T12:00");
+            const diaFrancoMasUno = this.tarjetaPersonalSinDiagrama.francoInicio === 6 ? 0 : this.tarjetaPersonalSinDiagrama.francoInicio + 1
             if (fecha.getDay() === this.tarjetaPersonalSinDiagrama.francoInicio) {
                 this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `DH del ciclo // desde ${this.diaSemanaStr(this.tarjetaPersonalSinDiagrama.francoInicio)} ${this.tarjetaPersonalSinDiagrama.HoraInicio}`;
                 this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = 6;
                 this.tarjetaPersonalSinDiagrama.days[dia].dejo = this.tarjetaPersonalSinDiagrama.HoraInicio;
-            } else if (fecha.getDay() === this.tarjetaPersonalSinDiagrama.francoInicio + 1) {
+                if(this.tarjetaPersonalSinDiagrama.days[diaAnt].dia_laboral == null){
+                    let [y,m,d] = dia.split("-")
+                    let j = 5;
+                    for(let i = parseInt(d) -1 ;i > 0; i-- ){
+                        let fechaStr = `${y}-${m}-0${i}`                        
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].dia_laboral = j;
+                        if(j === 0){
+                            this.tarjetaPersonalSinDiagrama.days[fechaStr].tomo = "DH";
+                            this.tarjetaPersonalSinDiagrama.days[fechaStr].dejo = "DH";
+                        }
+                        j--
+                    }
+                }
+            } else if (fecha.getDay() === diaFrancoMasUno) {
                 this.tarjetaPersonalSinDiagrama.days[dia].disponibleHora = this.tarjetaPersonalSinDiagrama.HoraHasta;
                 this.tarjetaPersonalSinDiagrama.days[dia].tomo = 'DH';
                 this.tarjetaPersonalSinDiagrama.days[dia].dejo = 'DH';
                 this.tarjetaPersonalSinDiagrama.days[dia].dia_laboral = 0;
                 this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `DH del ciclo // hasta ${this.diaSemanaStr(this.tarjetaPersonalSinDiagrama.francoHasta)} ${this.tarjetaPersonalSinDiagrama.HoraHasta}`;
             } else {
-                const diaAnt = diaAnterior(dia + "T12:00");
                 this.calcularJornadaPosFranco(this.tarjetaPersonalSinDiagrama.days?.[diaAnt]?.dia_laboral, dia);
             }
+            this.tarjetaPersonalSinDiagrama.days[dia].deBaja = false;
+            this.tarjetaPersonalSinDiagrama.days[dia].relevando = false;
         },
         // Calcula el número de días laborales consecutivos después de un franco.
         calcularJornadaPosFranco (diaAnteriorLaboral:number|null,dia:string)  {
@@ -695,9 +713,11 @@ export default defineComponent({
         // Registra un relevo para un día específico, actualizando la tarjeta de la persona con los detalles del turno.
         registrarRelevo(dia: string, novedad: Novedad, fecha: Date) {
             this.tarjetaPersonalSinDiagrama.days[dia].tren = novedad.turno;
+            this.tarjetaPersonalSinDiagrama.days[dia].franco = novedad.franco;
             this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `Relevando en la novedad N°${novedad._id} vice ${novedad.apellido} ${novedad.nombres} de baja por ${novedad.tipoNovedad}`;
             this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id;
-            this.tarjetaPersonalSinDiagrama.days[dia].editable = false;
+            this.tarjetaPersonalSinDiagrama.days[dia].deBaja = false;
+            this.tarjetaPersonalSinDiagrama.days[dia].relevando = true;
 
             const francoNroSemana = obtenerNumeroDia(novedad.franco);
             const jornada = dia_laboral(francoNroSemana, fecha.getDay());
@@ -722,6 +742,7 @@ export default defineComponent({
                 ["Jul24"],// provisorio
                 nombreTurno
             );
+            console.warn("TODO: itinerario provisorio");
             
             let turno:ITurno = defaultTurnos();
             if (turnosEncontrados.length > 1) 
@@ -750,14 +771,14 @@ export default defineComponent({
             if (diaAnt.tomo === 'DH' && dosDiasAnt && dosDiasAnt.dejo !== '') {
                 horasASumar = especialidad.includes('guardatren diesel') ? 41 : 42;
                 return sumarHoras(dosDiasAnt.dejo, horasASumar);
-            } else if (diaAnt.dejo !== 'DH' && diaAnt.dejo !== '') {
-                return sumarHoras(diaAnt.dejo, horasASumar);
+            // } else if (diaAnt.dejo !== 'DH' && diaAnt.dejo !== '' ) { // comente esta linea porque me calcula la disponibilidad el dia del DH
+                // return sumarHoras(diaAnt.dejo, horasASumar);
             } else {
                 return '';
             }
         },
 
-        // 5
+        // 5 puse por enfermedad pero en realidad contempla cualquier novedad
         procesarBajaPorEnfermedad(novedades: Novedad[], dia: string) {
             novedades.forEach((novedad: Novedad) => {
                 if (esFechaMayorIgual(dia, novedad.fechaBaja) && 
@@ -774,7 +795,8 @@ export default defineComponent({
             this.tarjetaPersonalSinDiagrama.days[dia].totalHoras = '-';
             this.tarjetaPersonalSinDiagrama.days[dia].observaciones = `De baja por la novedad N°${novedad._id}`;
             this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id;
-            this.tarjetaPersonalSinDiagrama.days[dia].estilo = true;
+            this.tarjetaPersonalSinDiagrama.days[dia].deBaja = true;
+            this.tarjetaPersonalSinDiagrama.days[dia].relevando = false;
             this.tarjetaPersonalSinDiagrama.days[dia].editable = false;
         },
     },

@@ -3,6 +3,7 @@ import { Schema, model } from 'mongoose';
 // Definir el esquema de Jornada
 const JornadaSchema = new Schema({
   tren: { type: String },
+  franco: { type: String },
   desde: { type: String },
   hasta: { type: String },
   disponibleHora: { type: String },
@@ -11,8 +12,8 @@ const JornadaSchema = new Schema({
   totalHoras: { type: String },
   dia_laboral: { type: Number, default: null },
   observaciones: { type: String },
-  editable: { type: Boolean, default: true },
-  estilo: { type: Boolean, default: false },
+  relevando: { type: Boolean, default: false },
+  deBaja: { type: Boolean, default: false },
   nroNovedad: { type: Number, default: null }
 }, { _id: false }); // No generar un _id para cada Jornada
 
