@@ -13,6 +13,7 @@ export interface ITarjetaPersonalSinDiagrama {
 
 export interface Jornada {
   tren: string;
+  franco: string;
   desde: string;
   hasta: string;
   disponibleHora: string;
@@ -21,8 +22,9 @@ export interface Jornada {
   totalHoras: string;
   dia_laboral: number | null;
   observaciones: string;
+  relevando: boolean;
+  deBaja: boolean;
   editable: boolean;
-  estilo: boolean;
   [key: string]: any;
   nroNovedad: number | null;
 }
