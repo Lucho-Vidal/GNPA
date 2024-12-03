@@ -12,6 +12,7 @@ const JornadaSchema = new Schema({
   totalHoras: { type: String },
   dia_laboral: { type: Number, default: null },
   observaciones: { type: String },
+  editable: { type: Boolean, default: true },
   relevando: { type: Boolean, default: false },
   deBaja: { type: Boolean, default: false },
   nroNovedad: { type: Number, default: null }
