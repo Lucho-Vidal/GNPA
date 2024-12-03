@@ -121,6 +121,7 @@
                         type="Date"
                         name="fechaBaja"
                         v-model="cambioTurno.fechaCambio"
+                        @change="actualizarTurnos()"
                     />
                 </div>
             </div>
@@ -143,7 +144,7 @@
                         name="legajo"
                         autofocus
                         required
-                        @change="buscarPersonalPorLegajo(0,cambioTurno.personal[0].legajo)"
+                        @change="buscarPersonalPorLegajo(0)"
                         v-model="cambioTurno.personal[0].legajo"
                     />
                 </div>
@@ -277,7 +278,7 @@
                         name="legajo2"
                         autofocus
                         required
-                        @change="buscarPersonalPorLegajo(1,cambioTurno.personal[1].legajo)"
+                        @change="buscarPersonalPorLegajo(1)"
                         v-model="cambioTurno.personal[1].legajo"
                     />
                 </div>
@@ -393,12 +394,7 @@
             </div>
             <div>
                 <button class="btn btn-primary col-1 m-2">Guardar</button>
-                <button
-                    class="btn btn-secondary col-1 m-2"
-                    @click="$router.push('/cambioTurno')"
-                >
-                    Cerrar
-                </button>
+                <button class="btn btn-secondary col-1 m-2" @click="$router.push('/cambioTurno')">Cerrar</button>
             </div>
         </form>
     </main>
@@ -419,9 +415,12 @@ import { AxiosError } from "axios";
 import { createRegistro } from "../../services/registrosService";
 import { Registro } from "../../interfaces/IRegistro";
 import { ITurno } from "../../interfaces/ITurno";
-import { loadTurnos, itinerarioType } from '../../utils/funciones';
+import { loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from '../../utils/funciones';
 import { dia_laboral } from "../../utils/personal";
 import { filtrarPorTurno } from "../../utils/turnos";
+import { itinerarioType, diaPosterior, obtenerNumeroDia } from '../../utils/fechas';
+import { defaultPersonal, defaultTarjetaPersonalSinDiagrama } from "../../utils/interfacesDefault";
+import { ITarjetaPersonalSinDiagrama } from "../../interfaces/ITarjetaPersonalSinDiagrama";
 
 export default defineComponent({
     data() {
@@ -429,6 +428,9 @@ export default defineComponent({
             today: new Date(),
             lstTurnos: [] as ITurno[],
             cambiosTurnos: [] as CambioTurno[],
+            personales: [] as IPersonal[],
+            personalEncontrado: [] as IPersonal[],
+
             cambioTurno: {
                 fechaCambio: "",
                 personal: [
@@ -452,8 +454,10 @@ export default defineComponent({
                     },
                 ],
             } as CambioTurno,
+
             ultimoId: 0,
-            personales: [] as IPersonal[],
+            idNovedad: 0,
+
             days: [
                 "Domingo",
                 "Lunes",
@@ -465,9 +469,7 @@ export default defineComponent({
             ],
             search: "" as string,
             selectRemplazo: false,
-            personalEncontrado: [] as IPersonal[],
             mostrarModalSearch: false,
-            idNovedad: 0,
             cicloRelevando: false,
             message: {
                 activo: false,
@@ -475,6 +477,8 @@ export default defineComponent({
                 title: "",
                 message: "",
             },
+            tarjetaPersonalSinDiagrama: defaultTarjetaPersonalSinDiagrama() as ITarjetaPersonalSinDiagrama  
+
         };
     },
     methods: {
@@ -505,11 +509,11 @@ export default defineComponent({
                 this.faltaPersonal(this.cambioTurno) ||
                 this.tieneCambioCargado(this.cambioTurno)
             ) {
-                // if(this.message.activo){
-                //     this.message.message = "Ocurrió un problema con la validación. Si el error persiste, Contacte al administrador con capturas de pantalla del error."
-                //     this.message.status = 'danger'
-                //     this.idNovedad = 0;
-                // }
+                if(this.message.activo){
+                    this.message.message = "Ocurrió un problema con la validación. Si el error persiste, Contacte al administrador con capturas de pantalla del error."
+                    this.message.status = 'danger'
+                    this.idNovedad = 0;
+                }
                 return;
             }
             try {
@@ -632,7 +636,7 @@ export default defineComponent({
                 } 
                     ya tiene cargado un cambio de turno para la fecha asignada. Con el consecutivo N* ${
                         repetido._id
-                    }. Finalícelo para continuar `;
+                    }. Finalicé para continuar `;
                 this.message.status = "danger";
             }
             return res;
@@ -678,10 +682,10 @@ export default defineComponent({
         selectPersonal(personal: IPersonal) {
             if (this.selectRemplazo) {
                 this.cambioTurno.personal[1].legajo = personal.legajo;
-                this.buscarPersonalPorLegajo(1,personal.legajo);
+                this.buscarPersonalPorLegajo(1);
             } else {
                 this.cambioTurno.personal[0].legajo = personal.legajo;
-                this.buscarPersonalPorLegajo(0,personal.legajo);
+                this.buscarPersonalPorLegajo(0);
             }
 
             this.search = "";
@@ -736,57 +740,29 @@ export default defineComponent({
                 }
             );
         },
-        buscarPersonalPorLegajo(index:number,legajo:number) {
+        actualizarTurnos(){
+            this.buscarPersonalPorLegajo(0)
+            this.buscarPersonalPorLegajo(1)
+        },
+        async buscarPersonalPorLegajo(index:number) {
             /*  realiza la búsqueda por el legajo introducido en el respectivo input */
             this.message.title = "";
             this.message.message = "";
             this.message.status = "";
             this.message.activo = false;
-            let personalEncontrado: IPersonal
+            let personalEncontrado: IPersonal 
             let turno: ITurno;
             
             if (!this.cambioTurno.fechaCambio) {
-                this.cambioTurno.fechaCambio = this.today.toISOString().split("T")[0];
+                this.cambioTurno.fechaCambio = diaPosterior(this.today.toISOString().split("T")[0]);
             }
             const fecha = new Date(this.cambioTurno.fechaCambio+ "T12:00")
             const itinerario: string = itinerarioType(fecha);
 
-            [personalEncontrado] = this.personales.filter((personal: IPersonal) => 
-                        personal.legajo == legajo
-            );
+            personalEncontrado = this.personales.find((personal: IPersonal) => personal.legajo == this.cambioTurno.personal[index].legajo) ?? defaultPersonal();
+            let turnoEfec = personalEncontrado.turno
+            let jornada = dia_laboral(personalEncontrado.franco, fecha.getDay());
 
-            if(personalEncontrado.turno.toLowerCase().includes('ciclo')){
-                //TODO cuando se desarrolle servicio irregular
-            }else{
-                const turnos: ITurno[] = filtrarPorTurno(
-                    itinerario,
-                    this.lstTurnos,
-                    ["Jul24"],// provisorio
-                    personalEncontrado.turno
-                );
-                
-                turno = turnos[0];
-                const jornada = dia_laboral(personalEncontrado.franco, fecha.getDay());
-
-                if(jornada === 0){
-                    this.message.title = "Personal de franco";
-                    this.message.message = `${personalEncontrado.apellido} ${personalEncontrado.nombres} se encuentra de franco para la fecha seleccionada.`;
-                    this.message.status = "danger";
-                    this.message.activo = true;
-                    return
-                }
-                
-                if (turnos.length > 1) {
-                    turno = turnos.find( (turno: ITurno) => turno.turno === `${personalEncontrado.turno}.${jornada}`) || turno;
-                }
-
-                this.cambioTurno.personal[index].turnoEfectivo = turno.turno;
-                this.cambioTurno.personal[index].tomada = turno.toma;
-                this.cambioTurno.personal[index].dejada = turno.deja;
-                
-                }
-            
-            
             if (personalEncontrado) {
                 // this.validaPersonalConNovedadActiva(this.personalEncontrado[0]);
                 this.cambioTurno.personal[index].apellido = personalEncontrado.apellido;
@@ -795,12 +771,84 @@ export default defineComponent({
                 this.cambioTurno.personal[index].especialidad = personalEncontrado.especialidad;
                 this.cambioTurno.personal[index].turno = personalEncontrado.turno;
                 this.cambioTurno.personal[index].franco = this.days[personalEncontrado.franco];
-                
             }
+
+            if(personalEncontrado?.turno.toLowerCase().includes('ciclo')){
+                //TODO cuando se desarrolle servicio irregular
+                const [year, month] = this.cambioTurno.fechaCambio.split("-")
+                const selectedMonth = year + '-' + month
+                this.tarjetaPersonalSinDiagrama =  await loadTarjetaPersonalSinDiagramaPorLegajoYMes(personalEncontrado.legajo ,selectedMonth) || defaultTarjetaPersonalSinDiagrama();
+                if (this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].tren === "Orden"){
+                    this.cambioTurno.personal[index].turnoEfectivo = "Orden"
+                    this.cambioTurno.personal[index].tomada = this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].tomo
+                    this.cambioTurno.personal[index].dejada = this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].dejo
+                    return
+                }else if(this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].tomo === "DH"){
+                    // alert(`El personal ${personalEncontrado.apellido} ${personalEncontrado.nombres} es de servicio Irregular y tiene asignado un DH para la fecha seleccionada`)
+                    this.message.title = "Personal de franco";
+                    this.message.message = `${personalEncontrado.apellido} ${personalEncontrado.nombres} se encuentra de franco para la fecha seleccionada.`;
+                    this.message.status = "danger";
+                    this.message.activo = true;
+                    this.cambioTurno.personal[index].turnoEfectivo = ""
+                    this.cambioTurno.personal[index].tomada = ''
+                    this.cambioTurno.personal[index].dejada = ''
+                    return
+                }else if(this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].tren === ""){
+                    // alert(`El personal ${personalEncontrado.apellido} ${personalEncontrado.nombres} es de servicio Irregular y aun no tiene cargado el servicio para la fecha seleccionada`)
+                    this.message.title = "Personal sin servicio asignado";
+                    this.message.message = `${personalEncontrado.apellido} ${personalEncontrado.nombres} aun no tiene cargado el servicio para la fecha seleccionada.`;
+                    this.message.status = "danger";
+                    this.message.activo = true;
+                    this.cambioTurno.personal[index].turnoEfectivo = ""
+                    this.cambioTurno.personal[index].tomada = ''
+                    this.cambioTurno.personal[index].dejada = ''
+                    return
+                }else if (this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].deBaja){
+                    this.message.title = "Personal de baja por novedad";
+                    this.message.message = `${personalEncontrado.apellido} ${personalEncontrado.nombres} se encuentra de baja por 
+                    la novedad ${this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].nroNovedad}. No se puede cargar la novedad hasta que no se de el alta a la novedad.`;
+                    this.message.status = "danger";
+                    this.message.activo = true;
+                    this.cambioTurno.personal[index].turnoEfectivo = ""
+                    this.cambioTurno.personal[index].tomada = ''
+                    this.cambioTurno.personal[index].dejada = ''
+                    return
+                }else if (this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].relevando){
+                    turnoEfec = this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].tren
+                    const francoNum = obtenerNumeroDia(this.tarjetaPersonalSinDiagrama.days[this.cambioTurno.fechaCambio].franco)
+                    jornada = dia_laboral(francoNum, fecha.getDay());
+                }
+            }
+            console.warn("TODO: provisorio ['Jul24']");
+            const turnos: ITurno[] = filtrarPorTurno(
+                itinerario,
+                this.lstTurnos,
+                ["Jul24"],// provisorio
+                turnoEfec
+            );
+            
+            if(jornada === 0){
+                this.message.title = "Personal de franco";
+                this.message.message = `${personalEncontrado.apellido} ${personalEncontrado.nombres} se encuentra de franco para la fecha seleccionada.`;
+                this.message.status = "danger";
+                this.message.activo = true;
+                return
+            }
+            
+            turno = turnos[0];
+            if (turnos.length > 1) {
+                turno = turnos.find( (turno: ITurno) => turno.turno === `${turnoEfec}.${jornada}`) || turno;
+            }
+
+            this.cambioTurno.personal[index].turnoEfectivo = turno.turno;
+            this.cambioTurno.personal[index].tomada = turno.toma;
+            this.cambioTurno.personal[index].dejada = turno.deja;
+            
         },
     },
     async mounted() {
         try {
+            
             this.obtenerUltimoId();
             this.loadPersonales();
             this.loadCambioTurnos();
