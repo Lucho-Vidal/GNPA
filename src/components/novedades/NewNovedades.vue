@@ -369,7 +369,7 @@
                             <input
                                 type="number"
                                 name="legajo"
-                                class="form-control mb-3"
+                                class="form-control col-2 mb-3"
                                 v-model="remplazo.legajo"
                                 @change="asignarRelevoPorLegajo(remplazo.legajo,index)"
                             />
@@ -862,10 +862,10 @@ export default defineComponent({
                         hna2 = !fin2;
                     }
                     estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    // console.log("Caso 1");
-                    // console.log("novedad",novedadRegistrada._id);
-                    // console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    // console.log("estaDeBaja?",estaDeBaja);
+                    console.log("Caso 1");
+                    console.log("novedad",novedadRegistrada._id);
+                    console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                    console.log("estaDeBaja?",estaDeBaja);
                     if (estaDeBaja) {
                         const fechaBaja = new Date(novedadRegistrada.fechaBaja+"T12:00").toLocaleDateString();
                         const fechaAlta = !novedadRegistrada.HNA ? new Date(novedadRegistrada.fechaAlta+"T12:00").toLocaleDateString(): "HNA";
@@ -881,43 +881,46 @@ export default defineComponent({
                 if (!estaDeBaja && personal.turno.toLowerCase().includes("ciclo") && novedadRegistrada.remplazo.some(remp=> remp.legajo === personal.legajo ) && this.idParam !== novedadRegistrada._id && !novedadRegistrada.novedadInactiva){
 
                     // Extraer datos comunes
-                    const remplazo = novedadRegistrada.remplazo.find(remp => remp.legajo === personal.legajo);
+                    const remplazo = novedadRegistrada.remplazo.filter(remp => remp.legajo === personal.legajo);
 
                     // Variables inicializadas
-                    inicio1 =  remplazo?.inicioRelevo || "";
-                    fin1 =  remplazo?.finRelevo || "";
-                    hna1  = !fin1;   
-                    
-                    if(index == null){
-                        // Información del segundo rango (novedad actual)
-                        inicio2 = this.novedad.fechaBaja;
-                        fin2 = this.novedad.fechaAlta;
-                        hna2 = this.novedad.HNA;
-                        legajo = this.novedad.legajo
-                    }else{
-                        // Información del segundo rango (novedad actual)
-                        inicio2 = this.novedad.remplazo[index].inicioRelevo
-                        fin2 = this.novedad.remplazo[index].finRelevo
-                        hna2 = !fin2;
-                        legajo = this.novedad.remplazo[index].legajo!
+                    remplazo.some(remp=>{
+                        inicio1 =  remp?.inicioRelevo || "";
+                        fin1 =  remp?.finRelevo || "";
+                        hna1  = !fin1;   
+                        
+                        if(index == null){
+                            // Información del segundo rango (novedad actual)
+                            inicio2 = this.novedad.fechaBaja;
+                            fin2 = this.novedad.fechaAlta;
+                            hna2 = this.novedad.HNA;
+                            legajo = this.novedad.legajo
+                        }else{
+                            // Información del segundo rango (novedad actual)
+                            inicio2 = this.novedad.remplazo[index].inicioRelevo
+                            fin2 = this.novedad.remplazo[index].finRelevo
+                            hna2 = !fin2;
+                            legajo = this.novedad.remplazo[index].legajo!
+    
+                        }
+                        estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                        console.log("Caso 2");
+                        console.log(legajo);
+                        console.log("novedad",novedadRegistrada._id);
+                        console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
+                        console.log("estaDeBaja?",estaDeBaja);
 
-                    }
-                    estaDeBaja = seSolapanFechas(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    // console.log("Caso 2");
-                    // console.log(legajo);
-
-                    // console.log("novedad",novedadRegistrada._id);
-                    // console.log(inicio1,fin1,hna1,inicio2,fin2,hna2)
-                    // console.log("estaDeBaja?",estaDeBaja);
-                    if (estaDeBaja) {
-                        const fechaBaja = new Date(remplazo?.inicioRelevo+"T12:00").toLocaleDateString();
-                        const fechaAlta = remplazo?.finRelevo ? new Date(remplazo?.finRelevo+"T12:00").toLocaleDateString(): "HNA";
-                        titulo = "Personal relevando";
-                        estado = "warning";
-                        mensaje = `El personal ${personal.apellido} ${personal.nombres} se encuentra relevando la novedad N°${novedadRegistrada._id}.
-                        Desde: ${fechaBaja} Hasta: ${fechaAlta}
-                        Por favor, finalice la novedad para poder continuar`;
-                    }
+                        if (estaDeBaja) {
+                            const fechaBaja = new Date(remp?.inicioRelevo+"T12:00").toLocaleDateString();
+                            const fechaAlta = remp?.finRelevo ? new Date(remp?.finRelevo+"T12:00").toLocaleDateString(): "HNA";
+                            titulo = "Personal relevando";
+                            estado = "warning";
+                            mensaje = `El personal ${personal.apellido} ${personal.nombres} se encuentra relevando la novedad N°${novedadRegistrada._id}.
+                            Desde: ${fechaBaja} Hasta: ${fechaAlta}
+                            Por favor, finalice la novedad para poder continuar`;
+                        }
+                        return estaDeBaja
+                    })
                 }
                 if (estaDeBaja) {
                     this.idNovedad = novedadRegistrada._id;
