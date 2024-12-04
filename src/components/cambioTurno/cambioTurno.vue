@@ -237,10 +237,7 @@
                         <td class="col-1">{{ cambio.personal[0].apellido }}</td>
                         <td class="col-1">{{ cambio.personal[0].nombres }}</td>
                         <td class="col-1">{{ cambio.personal[0].base }}</td>
-                        <td class="col-1">
-                            {{
-                                cambio.personal[0].turno +
-                                " / " +
+                        <td class="col-1">{{cambio.personal[0].turnoEfectivo +" / " +
                                 dia_laboral(
                                     obtenerNumeroDia(cambio.personal[0].franco),
                                     today.getDay()
@@ -261,11 +258,7 @@
                         <td class="col-1">{{ cambio.personal[1].apellido }}</td>
                         <td class="col-1">{{ cambio.personal[1].nombres }}</td>
                         <td class="col-1">{{ cambio.personal[1].base }}</td>
-                        <td class="col-1">
-                            {{
-                                cambio.personal[1].turno +
-                                " / " +
-                                dia_laboral(
+                        <td class="col-1">{{cambio.personal[1].turnoEfectivo +" / " +dia_laboral(
                                     obtenerNumeroDia(cambio.personal[1].franco),
                                     today.getDay()
                                 )
