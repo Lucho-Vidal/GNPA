@@ -529,3 +529,57 @@ export function seSolapanFechas(inicio1:string, fin1:string,HNA1:boolean, inicio
 
     return esFechaMayorIgual(fin1, inicio2) && esFechaMayorIgual(fin2, inicio1);
 }
+/**
+ * Compara las horas de dos jornadas para determinar si hay menos de 10 horas entre ellas.
+ *
+ * @param toma1 - Hora de toma del primer personal en formato "HH:mm".
+ * @param deja1 - Hora de deja del primer personal en formato "HH:mm".
+ * @param toma2 - Hora de toma del segundo personal en formato "HH:mm".
+ * @param deja2 - Hora de deja del segundo personal en formato "HH:mm".
+ * @returns {boolean} - Retorna true si hay menos de 10 horas entre las jornadas, false en caso contrario.
+ */
+export function hayMenosDe10HorasEntreJornadas(
+        toma1: string,
+        deja1: string,
+        toma2: string,
+        deja2: string
+    ): boolean {
+    // Helper para convertir "HH:mm" en un objeto Date con un día específico
+    const horaStringADate = (hora: string, dia: number): Date => {
+        const [horas, minutos] = hora.split(":").map(Number);
+        const date = new Date();
+        date.setDate(dia); // Setea el día específico
+        date.setHours(horas, minutos, 0, 0); // Setea hora y minutos
+        return date;
+    };
+    // Obtener el día actual
+    const hoy = new Date().getDate();
+
+    // Convertir horas en objetos Date
+    const toma1Date = horaStringADate(toma1, hoy);
+    const deja1Date = horaStringADate(deja1, hoy);
+    const toma2Date = horaStringADate(toma2, hoy);
+    const deja2Date = horaStringADate(deja2, hoy);
+
+    // Crear variantes con el día anterior y posterior
+    const toma1DiaAnterior = horaStringADate(toma1, hoy - 1);
+    const deja1DiaSiguiente = horaStringADate(deja1, hoy + 1);
+    const toma2DiaAnterior = horaStringADate(toma2, hoy - 1);
+    const deja2DiaSiguiente = horaStringADate(deja2, hoy + 1);
+
+    // Obtener las diferencias de tiempo en milisegundos
+    const diezHorasEnMs = 10 * 60 * 60 * 1000;
+
+    // Calcular diferencias posibles
+    const diferencias = [
+      Math.abs(toma2Date.getTime() - deja1Date.getTime()), // Misma noche
+      Math.abs(toma2DiaAnterior.getTime() - deja1Date.getTime()), // Día anterior
+      Math.abs(toma2Date.getTime() - deja1DiaSiguiente.getTime()), // Día siguiente
+      Math.abs(toma1Date.getTime() - deja2Date.getTime()), // Comparación inversa
+      Math.abs(toma1DiaAnterior.getTime() - deja2Date.getTime()), // Día anterior inverso
+      Math.abs(toma1Date.getTime() - deja2DiaSiguiente.getTime()), // Día siguiente inverso
+    ];
+
+    // Verificar si alguna diferencia es menor a 10 horas
+    return diferencias.some((diferencia) => diferencia < diezHorasEnMs);
+}
