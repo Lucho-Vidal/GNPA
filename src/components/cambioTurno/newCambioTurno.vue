@@ -502,7 +502,8 @@ export default defineComponent({
             /* Método utilizado para realizar la consulta HTML:POST al backend para el guardado de los datos */
             this.ultimoId++;
             this.cambioTurno._id = this.ultimoId;
-            this.cambioTurno.fecha = this.today.toString();
+            this.cambioTurno.fecha = this.today.toLocaleString();
+
             if(this.message.activo && this.message.status === "danger"){
                 alert("Hay un conflicto para cargar este cambio de turno. Por favor verifique los datos");
                 return
