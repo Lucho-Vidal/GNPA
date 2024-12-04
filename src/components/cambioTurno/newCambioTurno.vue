@@ -110,7 +110,7 @@
             </div>
         </div>
         <!-- Formulario -->
-        <form @submit.prevent="saveNovedad()" @keydown.enter.prevent="">
+        <form @submit.prevent="saveNovedad()" @keydown.enter.prevent="moverAlSiguienteElemento($event)">
             <div class="justify-content-between row">
                 <div class="col-3">
                     <label for="fechaBaja"></label>
@@ -418,7 +418,7 @@ import { ITurno } from "../../interfaces/ITurno";
 import { loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from '../../utils/funciones';
 import { dia_laboral } from "../../utils/personal";
 import { filtrarPorTurno } from "../../utils/turnos";
-import { itinerarioType, diaPosterior, obtenerNumeroDia } from '../../utils/fechas';
+import { itinerarioType, diaPosterior, obtenerNumeroDia, hayMenosDe10HorasEntreJornadas } from '../../utils/fechas';
 import { defaultPersonal, defaultTarjetaPersonalSinDiagrama } from "../../utils/interfacesDefault";
 import { ITarjetaPersonalSinDiagrama } from "../../interfaces/ITarjetaPersonalSinDiagrama";
 
@@ -435,7 +435,7 @@ export default defineComponent({
                 fechaCambio: "",
                 personal: [
                     {
-                        legajo: 0,
+                        legajo: null,
                         apellido: "",
                         nombres: "",
                         base: "",
@@ -444,7 +444,7 @@ export default defineComponent({
                         franco: "",
                     },
                     {
-                        legajo: 0,
+                        legajo: null,
                         apellido: "",
                         nombres: "",
                         base: "",
@@ -503,6 +503,12 @@ export default defineComponent({
             this.ultimoId++;
             this.cambioTurno._id = this.ultimoId;
             this.cambioTurno.fecha = this.today.toString();
+            if(this.message.activo && this.message.status === "danger"){
+                alert("Hay un conflicto para cargar este cambio de turno. Por favor verifique los datos");
+                return
+            }else if(this.message.activo && this.message.status === "warning"){
+                if( !confirm("Hay un conflicto con la jornada de este cambio de turno. ¿Desea continuar de todas formas?")) return
+            }
 
             if (
                 this.mismoPersonal(this.cambioTurno) ||
@@ -532,6 +538,25 @@ export default defineComponent({
                 this.$router.push({ name: "cambioTurno" });
             } catch (error) {
                 this.handleRequestError(error as AxiosError);
+            }
+        },
+        moverAlSiguienteElemento(event: KeyboardEvent) {
+            event.preventDefault();
+            const focusable = Array.from(
+                document.querySelectorAll<HTMLElement>(`button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])`)
+            )
+            .filter((el, index) => !el.hasAttribute('disabled') && index >= 13);
+            let currentIndex = focusable.indexOf(event.target as HTMLElement);
+            
+            if(currentIndex === focusable.length -1) {
+                currentIndex = 0 
+            }
+
+            // Encuentra el siguiente elemento habilitado y focusable
+            const siguienteElemento = focusable.slice(currentIndex + 1).find(el => el);
+
+            if (siguienteElemento) {
+                siguienteElemento.focus();
             }
         },
         handleRequestError(error: AxiosError) {
@@ -753,6 +778,9 @@ export default defineComponent({
             let personalEncontrado: IPersonal 
             let turno: ITurno;
             
+            if (!this.cambioTurno.personal[index].legajo) {
+                return
+            }
             if (!this.cambioTurno.fechaCambio) {
                 this.cambioTurno.fechaCambio = diaPosterior(this.today.toISOString().split("T")[0]);
             }
@@ -843,7 +871,20 @@ export default defineComponent({
             this.cambioTurno.personal[index].turnoEfectivo = turno.turno;
             this.cambioTurno.personal[index].tomada = turno.toma;
             this.cambioTurno.personal[index].dejada = turno.deja;
-            
+            if(this.cambioTurno.personal[0].tomada && this.cambioTurno.personal[1].tomada){
+                const noLeDaElDescanso =hayMenosDe10HorasEntreJornadas(
+                    this.cambioTurno.personal[0].tomada,
+                    this.cambioTurno.personal[0].dejada,
+                    this.cambioTurno.personal[1].tomada,
+                    this.cambioTurno.personal[1].dejada
+                )
+                if(noLeDaElDescanso) {
+                    this.message.title = "El descanso es insuficiente!";
+                    this.message.message = `No alcanzan las horas de descanso entre ambos personales. Por favor revise las jornadas.`;
+                    this.message.status = "warning";
+                    this.message.activo = true;
+                }
+            }
         },
     },
     async mounted() {
