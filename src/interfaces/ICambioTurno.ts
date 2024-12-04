@@ -6,7 +6,7 @@ export interface CambioTurno{
 }
 
 export interface Personal{
-    legajo:number;
+    legajo:number|null;
     apellido: string;
     nombres: string;
     base: string;
