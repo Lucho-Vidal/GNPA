@@ -4,12 +4,12 @@
             Lista de personales por base
         </h2>
         <div class="d-flex justify-content-center mb-3">
-            <label for="dotacion" class="col-2 mx-3">
-                    Dotación
+            <label for="dotacion" class="col-1 mx-3">
                     <select
                     name="dotacion"
                     id="dotacion"
-                    class="col-6 mx-3"
+                    class="form-control"
+                    placeholder="Dotación"
                     v-model="dotacionesSeleccionadas"
                     @change="filtrar()"
                     >
@@ -19,12 +19,12 @@
                     </select>
                 </label>
 
-            <label for="it" class="col-2 mx-3">
-                Itinerario
+            <label for="it" class="col-1 mx-3">
                 <select
                     name="it"
                     id="it"
-                    class="col-6 mx-3"
+                    class="form-control"
+                    placeholder="Itinerario"
                     v-model="itinerarioSeleccionado"
                     @change="filtrar()"
                 >
@@ -33,24 +33,29 @@
                     <option value="D">Domingo</option>
                 </select>
             </label>
-
-            <input
-                type="date"
-                name="today"
-                id="today"
-                v-model="inputDate"
-                @change="filtrar()"
-            />
-            <button
-                class="btn mx-5"
-                :class="[isOnlySinCubrir ? 'btn-secondary' : 'btn-danger' ]"
-                @click="toggleSinCubrir"
-            >
-                {{ isOnlySinCubrir ? 'Todos' : 'Sin Cubrir' }}
-            </button>
-            <button class="btn btn-info mx-1" @click.prevent="toggleExpandirTurnos()">
-                {{ turnosExpandidos ? 'Contraer todos los Turnos' : 'Expandir todos los Turnos' }}
-            </button>
+            <label for="" class="col-1">
+                <input
+                    type="date"
+                    name="today"
+                    id="today"
+                    class="form-control"
+                    placeholder="Fecha"
+                    v-model="inputDate"
+                    @change="filtrar()"
+                />
+            </label>
+            <div>
+                <button
+                    class="btn mx-5"
+                    :class="[isOnlySinCubrir ? 'btn-secondary' : 'btn-danger' ]"
+                    @click="toggleSinCubrir"
+                >
+                    {{ isOnlySinCubrir ? 'Todos' : 'Sin Cubrir' }}
+                </button>
+                <button class="btn btn-info mx-1" @click.prevent="toggleExpandirTurnos()">
+                    {{ turnosExpandidos ? 'Contraer todos los Turnos' : 'Expandir todos los Turnos' }}
+                </button>
+            </div>
         </div>
         <div class="d-flex justify-content-center flex-wrap my-3">
             <h6>Aplicar circular:</h6>
@@ -376,11 +381,13 @@ import {
     handleRequestError,
     quitarDuplicados,
     loadCambiosTurnos,
+    loadOrdenamientos,
 } from "../../utils/funciones";
 import { CambioTurno } from "../../interfaces/ICambioTurno";
 import { obtenerTiposCirculares } from "../../utils/turnos";
 import { buscarPersonalACargo, obtenerDotaciones } from "../../utils/personal";
 import { compararHoras } from "../../utils/fechas";
+import { Ordenamiento } from "../../interfaces/IOrdenamientos";
 
 export default defineComponent({
     data() {
@@ -400,6 +407,7 @@ export default defineComponent({
             turnosGuardas: [] as ITurno[],
             turnosConductorOrd: [] as ITurno[],
             turnosGuardasOrd: [] as ITurno[],
+            ordenamientos: [] as Ordenamiento[],
 
             itinerarioSeleccionado: "" as string,
             inputDate: "" as string,
@@ -466,11 +474,7 @@ export default defineComponent({
             this.turnosGuardas.forEach((turno) => (turno.viewDetail = this.turnosExpandidos));
         },
         viewDetail(turno: ITurno) {
-            if (turno.viewDetail) {
-                turno.viewDetail = false;
-            } else {
-                turno.viewDetail = true;
-            }
+            turno.viewDetail = !turno.viewDetail 
         },
         toggleSinCubrir(){
             this.isOnlySinCubrir = ! this.isOnlySinCubrir
@@ -497,7 +501,7 @@ export default defineComponent({
             let turnosGuardas = filtroTurnos(["guardatren electrico", "guardatren diesel"], false);
             let turnosConductor = filtroTurnos(["conductor electrico", "conductor diesel"], false);
             let turnosGuardasOrd = filtroTurnos(["guardatren electrico", "guardatren diesel"], true);
-            let turnosConductorOrd = filtroTurnos(["conductor diesel"], true);
+            let turnosConductorOrd = filtroTurnos(["conductor electrico", "conductor diesel"], true);
 
             turnosGuardas = quitarDuplicados(turnosGuardas, this.circularSeleccionada);
             turnosConductor = quitarDuplicados(turnosConductor, this.circularSeleccionada);
@@ -509,6 +513,21 @@ export default defineComponent({
             [turnosGuardas, turnosConductor, turnosGuardasOrd, turnosConductorOrd].forEach((turnos) => {
                 buscarPersonalACargo(fecha, this.inputDate, turnos, this.personales, this.novedades, this.cambiosTurnos);
             });
+
+            //Aca si hay una cancelacion de diagrama vamos a quitarle el nombre por "Sin Cubrir"
+            const cancelacionesDiagrama = this.ordenamientos.filter((orden:Ordenamiento)=>{                
+                return orden.tipo === "cancelacionDiagrama" && orden.fecha.split(",")[0] === new Date(this.inputDate+"T12:00").toLocaleDateString();
+            });
+
+            cancelacionesDiagrama.forEach(cd=>{
+                [turnosGuardas, turnosConductor ].forEach((turnos) => {
+                    turnos.forEach(turno=>{
+                        if(turno.turno === cd.turnoEfectivo) {
+                            turno.personal = "Sin Cubrir"
+                        }
+                    })
+                });
+            })
 
             if (this.isOnlySinCubrir) {
                 turnosConductor = turnosConductor.filter((turno) => turno.personal === "Sin Cubrir");
@@ -552,15 +571,16 @@ export default defineComponent({
     },
     async created() {
         try {
+            this.dotacionesSeleccionadas = localStorage.getItem("dotacionSeleccionada") || "";
+            this.itinerarioSeleccionado = localStorage.getItem("itSeleccionada")||"";
+            
             this.loadTurnos();
             this.loadPersonales();
             this.loadNovedades();
+            this.ordenamientos = await loadOrdenamientos() || [];
             this.cambiosTurnos = (await loadCambiosTurnos()) || [];
             this.today.setHours(12, 0, 0, 0);
             newToken();
-            
-            this.dotacionesSeleccionadas = localStorage.getItem("dotacionSeleccionada") || "";
-            this.itinerarioSeleccionado = localStorage.getItem("itSeleccionada")||"";
             
 
         } catch (error) {
