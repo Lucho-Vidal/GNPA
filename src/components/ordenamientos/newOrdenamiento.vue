@@ -9,30 +9,20 @@
                 'Cancelación Diagrama': ''
             }}
         </h1>
-        <div class="container d-flex">
-            <div
-            class="justify-content-center alert row "
-            :class="[
-                message.status == 'danger'
-                    ? 'alert-danger'
-                    : message.status == 'success'
-                    ? 'alert-success'
-                    : message.status == 'warning'
-                    ? 'alert-warning'
-                    : '',
-            ]"
-            role="alert"
-            v-if="message.activo"
-            >
-                <h4 class="alert-heading">{{ message.title }}</h4>
+        <div class="container">
+            <div class="justify-content-center alert row"
+                :class="[
+                    message.status == 'danger'
+                        ? 'alert-danger'
+                        : message.status == 'success'
+                        ? 'alert-success'
+                        : message.status == 'warning'
+                        ? 'alert-warning'
+                        : '',
+                ]" role="alert" v-if="message.activo">
+                <h4 class="alert-heading">ATENCIÓN! {{ message.title }}</h4>
                 <hr />
                 {{ message.message }}
-                <!-- <a
-                    v-if="idNovedad !== 0"
-                    class="btn btn-danger col-2"
-                    @click="$router.push(`/editNovedades/${idNovedad}`)"
-                    >Ir a la novedad</a
-                > -->
             </div>
         </div>
         
@@ -81,35 +71,17 @@
                                     </thead>
                                     <tbody>
                                         <tr
-                                            v-for="(
-                                                personal, index
-                                            ) in personales"
+                                            v-for="(personal, index) in personalEncontrado"
                                             :key="index"
-                                            @click="
-                                                selectPersonal(personal)
-                                            "
+                                            @click="selectPersonal(personal)"
                                         >
-                                            <td class="col-1">
-                                                {{ personal.legajo }}
-                                            </td>
-                                            <td class="col-1">
-                                                {{ personal.apellido }}
-                                            </td>
-                                            <td class="col-2">
-                                                {{ personal.nombres }}
-                                            </td>
-                                            <td class="col-1">
-                                                {{ personal.dotacion }}
-                                            </td>
-                                            <td class="col-1">
-                                                {{ personal.turno }}
-                                            </td>
-                                            <td class="col-1">
-                                                {{ days[personal.franco] }}
-                                            </td>
-                                            <td class="col-1">
-                                                {{ personal.especialidad }}
-                                            </td>
+                                            <td class="col-1">{{ personal.legajo }}</td>
+                                            <td class="col-1">{{ personal.apellido }}</td>
+                                            <td class="col-2">{{ personal.nombres }}</td>
+                                            <td class="col-1">{{ personal.dotacion }}</td>
+                                            <td class="col-1">{{ personal.turno }}</td>
+                                            <td class="col-1">{{ days[personal.franco] }}</td>
+                                            <td class="col-1">{{ personal.especialidad }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -121,13 +93,14 @@
         </div>
         <div>
             <div class="col-3 btn-buscar-personal" >
-                <label for="tipoNovedad">Tipo de Novedad 
+                <label for="tipoNovedad">Tipo de Orden 
                     <select
                         name="tipoNovedad"
                         id="tipoNovedad"
                         class="form-control mb-3 w-100"
                         required
                         v-model="ordenamiento.tipo"
+                        @change="verificarSiNecesitaCancelacion"
                     >
                         <option value="ordenamiento" selected>Ordenamiento</option>
                         <option value="informe">Informe</option>
@@ -158,6 +131,7 @@
                         autofocus
                         required
                         @change="searchPersonalPorLegajo()"
+                        @keyup.enter="searchPersonalPorLegajo()"
                         v-model="ordenamiento.personal.legajo"
                         />
                 </div>
@@ -185,6 +159,18 @@
                         disabled
                     />
                 </div>
+                <div class="col-3">
+                    <label for="especialidad"></label>
+                    Especialidad
+                    <input
+                        class="form-control mb-3"
+                        placeholder=""
+                        type="text"
+                        name="especialidad"
+                        v-model="ordenamiento.personal.especialidad"
+                        disabled
+                    />
+                </div>
             </div>
             <div class="row">
                 <div class="col-1">
@@ -196,18 +182,6 @@
                         type="text"
                         name="base"
                         v-model="ordenamiento.personal.dotacion"
-                        disabled
-                    />
-                </div>
-                <div class="col-3">
-                    <label for="especialidad"></label>
-                    Especialidad
-                    <input
-                        class="form-control mb-3"
-                        placeholder=""
-                        type="text"
-                        name="especialidad"
-                        v-model="ordenamiento.personal.especialidad"
                         disabled
                     />
                 </div>
@@ -225,6 +199,18 @@
                 </div>
                 <div class="col-2">
                     <label for="franco"></label>
+                    Turno Efectivo
+                    <input
+                        class="form-control mb-3"
+                        placeholder=""
+                        type="text"
+                        name="franco"
+                        v-model="ordenamiento.turnoEfectivo"
+                        disabled
+                    />
+                </div>
+                <div class="col-2">
+                    <label for="franco"></label>
                     Franco
                     <input
                         class="form-control mb-3"
@@ -235,6 +221,31 @@
                         disabled
                     />
                 </div>
+                <div class="col-2">
+                    <label for="franco"></label>
+                    Toma
+                    <input
+                        class="form-control mb-3"
+                        placeholder=""
+                        type="text"
+                        name="franco"
+                        v-model="ordenamiento.toma"
+                        disabled
+                    />
+                </div>
+                <div class="col-2">
+                    <label for="franco"></label>
+                    Deja
+                    <input
+                        class="form-control mb-3"
+                        placeholder=""
+                        type="text"
+                        name="franco"
+                        v-model="ordenamiento.deja"
+                        disabled
+                    />
+                </div>
+
             </div>
             
             <div class="row" v-if="ordenamiento.tipo === 'informe'">
@@ -248,14 +259,40 @@
                 </div>
             </div>
 
-            <table v-if="ordenamiento.tipo === 'ordenamiento'||ordenamiento.tipo === 'cancelacionDiagrama'">
+            <table v-if="ordenamiento.tipo === 'cancelacionDiagrama'" class="table table-striped table-hover">
                 <thead>
                     <tr>
+                        <th>ref</th>
                         <th>tren</th>
                         <th>Desde</th>
                         <th>Sale</th>
                         <th>Hasta</th>
                         <th>Llega</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody class="Small">
+                    <tr v-for="(tren, index) in ordenamiento?.turno?.vueltas" :key="index">
+                        <td>{{ tren.refer}}</td>
+                        <td>{{ tren.tren}}</td>
+                        <td>{{ tren.origen}}</td>
+                        <td>{{ tren.sale }}</td>
+                        <td>{{ tren.destino }}</td>
+                        <td>{{ tren.llega }}</td>
+                        <td>{{ tren.observaciones }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table v-if="ordenamiento.tipo === 'ordenamiento'">
+                <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>tren</th>
+                        <th>Desde</th>
+                        <th>Sale</th>
+                        <th>Hasta</th>
+                        <th>Llega</th>
+                        <th>Observaciones</th>
                         <th>Borrar</th>
                         <th class="col-1 px-5">
                             <i class="material-icons cursor-hand verde"
@@ -265,37 +302,68 @@
                 </thead>
                 <tbody>
                     <tr
-                        v-for="(tren, index) in ordenamiento.turno.vueltas"
-                        :key="index"
-                    >
+                        v-for="(tren, index) in ordenamiento?.turno?.vueltas" :key="index"
+                    >   
+                        
+                        <td>
+                            <select
+                                name="ref"
+                                id="ref"
+                                class="form-control"
+                                v-model="tren.refer"
+                                >
+                                    <option >
+                                        
+                                    </option>
+                                    <option >
+                                        PS
+                                    </option>
+                            </select>
+                        </td>
                         <td>
                             <input
                                 type="number"
-                                class="form-control mb-3"
+                                class="form-control"
                                 name="tren"
                                 v-model="tren.tren"
                             />
                         </td>
                         <td>
-                            <input
-                                type="text"
-                                class="form-control mb-3"
-                                name="desde"
+                            <select
+                                name="dotacion"
+                                id="dotacion"
+                                class="form-control"
                                 v-model="tren.origen"
-                            />
+                                >
+                                    <option v-for="(dotacion, index) in dotacionesPermitidas" :key="index" :value="dotacion">
+                                        {{ dotacion }}
+                                    </option>
+                            </select>
                         </td>
                         <td>
                             <input
                                 type="text"
-                                class="form-control mb-3"
+                                class="form-control "
                                 name="sale"
                                 v-model="tren.sale"
                             />
                         </td>
                         <td>
+                            <select
+                                name="dotacion"
+                                id="dotacion"
+                                class="form-control"
+                                v-model="tren.destino"
+                                >
+                                    <option v-for="(dotacion, index) in dotacionesPermitidas" :key="index" :value="dotacion">
+                                        {{ dotacion }}
+                                    </option>
+                            </select>
+                        </td>
+                        <td>
                             <input
                                 type="text"
-                                class="form-control mb-3"
+                                class="form-control "
                                 name="llega"
                                 v-model="tren.llega"
                             />
@@ -303,9 +371,9 @@
                         <td>
                             <input
                                 type="text"
-                                class="form-control mb-3"
-                                name="hasta"
-                                v-model="tren.destino"
+                                class="form-control "
+                                name="llega"
+                                v-model="tren.observaciones"
                             />
                         </td>
                         <td>    
@@ -330,94 +398,42 @@
             
         </form>
         <div v-if="esDiagramado && !turnosEncontrado.ordenes" class="container mt-5">
-            <h5>El personal es diagramado, deberá cargar una cancelacion de diagrama para ordenarlo. Cargue los trenes que no va a correr</h5>
-        
-            <!-- <table  class="table table-striped table-hover">
-                <thead v-if="turnosEncontrado" class="">
-                    <tr>
-                        <th colspan="1">Vuelta</th>
-                        <th colspan="1">Ref</th>
-                        <th colspan="1">Tren</th>
-                        <th colspan="1">Origen</th>
-                        <th colspan="1">Sale</th>
-                        <th colspan="1">Destino</th>
-                        <th colspan="1">Llega</th>
-                        <th colspan="1">Observaciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        v-for="(vuelta, index) in turnosEncontrado.vueltas"
-                        :key="index"
-                    >
-                        <td class="col-3">{{ vuelta.vuelta }}</td>
-                        <td class="col-1">{{ vuelta.refer }}</td>
-                        <td class="col-1">{{ vuelta.tren }}</td>
-                        <td class="col-1">{{ vuelta.origen }}</td>
-                        <td class="col-1">{{ vuelta.sale }}</td>
-                        <td class="col-1">{{ vuelta.destino }}</td>
-                        <td class="col-1">{{ vuelta.llega }}</td>
-                        <td class="col-3">
-                            {{ vuelta.observaciones }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table> -->
+            <h5>El personal es diagramado, deberá cargar una cancelacion de diagrama para ordenarlo. </h5>
         </div>
     </main>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { IPersonal } from "../../interfaces/IPersonal";
-import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
-import { guardarRegistro, itinerarioType, loadPersonales, loadTurnos } from '../../utils/funciones';
+import { IPersonal } from "../../interfaces/IPersonal";
 import { Ordenamiento } from "../../interfaces/IOrdenamientos";
 import { Itinerario } from "../../interfaces/Itinerario";
-import { createOrdenamiento } from '../../services/ordenamientoService';
 import { ITurno } from '../../interfaces/ITurno';
+import { createOrdenamiento } from '../../services/ordenamientoService';
+import { newToken } from "../../services/signService";
+import { guardarRegistro, loadOrdenamientos, loadPersonales, loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from '../../utils/funciones';
 import { dia_laboral } from "../../utils/personal";
-import { defaultTurnos } from "../../utils/interfacesDefault";
+import { itinerarioType, obtenerNumeroDia } from "../../utils/fechas";
+import { defaultOrdenamiento, defaultTarjetaPersonalSinDiagrama, defaultTurnos } from "../../utils/interfacesDefault";
+import { ITarjetaPersonalSinDiagrama } from "../../interfaces/ITarjetaPersonalSinDiagrama";
 
 export default defineComponent({
     data() {
         return {
             today: new Date(),
             personales: [] as IPersonal[],
-            personalEncontrado: {} as IPersonal,
+            personalAOrdenar: {} as IPersonal | undefined,
+            personalEncontrado: [] as IPersonal[],
+            personalSinDiagrama: {} as ITarjetaPersonalSinDiagrama,
+
             turnos:[] as ITurno[],
             turnosEncontrado:{} as ITurno,
-            ordenamiento: {
-                _id:'',
-                fecha: '',
-                tipo: 'ordenamiento',
-                personal: {
-                    _id: '',
-                    legajo: 0,
-                    apellido: '',
-                    nombres: '',
-                    turno: '',
-                    franco: 7,
-                    especialidad: '',
-                    dotacion: '',
-                    observaciones: '',
-                    orden: 0,
-                    conocimientos: {
-                        CML: false,
-                        CKD: false,
-                        RO: false,
-                        MPN: false,
-                        OL: false,
-                        LCI: false,
-                        ELEC: false,
-                        DUAL: false
-                    },
-                    viewDetail: false
-                },
-                turno: {},
-                detalle: ''
-            } as Ordenamiento,
+            dotacionesPermitidas: [
+                'PC','ALL','K5','RE','TY','BO','GW','AK','LLV','MG','ZZ','CÑ','MN','LB','QL','BZ','VE','OA','LP','CY','FV','BQ','JG'
+            ] as string[],
+            ordenamiento: defaultOrdenamiento() as Ordenamiento,
+            ordenamientos: [] as Ordenamiento[],
             itinerario: [] as Itinerario[],
             days: [
                 "Domingo",
@@ -452,6 +468,12 @@ export default defineComponent({
             //     // }
             //     return;
             // }
+            if (this.message.activo){
+                return
+            }
+            if (this.ordenamiento.personal.apellido === "" ){
+                return
+            }
             try {
                 // Crear la novedad
                 await createOrdenamiento(this.ordenamiento);
@@ -509,7 +531,7 @@ export default defineComponent({
         searchPersonal() {
             /* Este método funciona dentro del modal, al escribir dentro del input filtra por
         nombre y apellido el personal */
-            [this.personalEncontrado] = this.personales.filter(
+            this.personalEncontrado = this.personales.filter(
                 (personal: IPersonal) => {
                     return (
                         personal.apellido.toLowerCase() +
@@ -519,29 +541,70 @@ export default defineComponent({
                 }
             );
         },
-        searchPersonalPorLegajo() {
+        async searchPersonalPorLegajo() {
             /*  realiza la búsqueda por el legajo introducido en el respectivo input */
             this.message.message = "";
             this.message.status = "";
             this.message.activo = false;
-            [this.personalEncontrado] = this.personales.filter(
-                (personal: IPersonal) => {
-                    return (
-                        personal.legajo == this.ordenamiento.personal.legajo
-                    );
-                }
-            );
-            if (this.personalEncontrado) {
+            // this.ordenamiento = defaultOrdenamiento()
+            this.ordenamiento.turno = defaultTurnos()
+            const personalAOrdenar = this.personales.find((personal: IPersonal) => {
+                return (personal.legajo == this.ordenamiento.personal.legajo);
+            }) ;
+
+            if ( personalAOrdenar) {
                 // this.validaPersonalConNovedadActiva(this.personalEncontrado[0]);
-                this.ordenamiento.personal.apellido = this.personalEncontrado.apellido;
-                this.ordenamiento.personal.nombres = this.personalEncontrado.nombres;
-                this.ordenamiento.personal.dotacion = this.personalEncontrado.dotacion;
-                this.ordenamiento.personal.especialidad = this.personalEncontrado.especialidad;
-                this.ordenamiento.personal.turno = this.personalEncontrado.turno;
-                this.ordenamiento.personal.franco = this.personalEncontrado.franco;
-                this.ordenamiento.fecha = this.today.toISOString().split("T")[0];
+                this.ordenamiento.personal.apellido = personalAOrdenar.apellido;
+                this.ordenamiento.personal.nombres = personalAOrdenar.nombres;
+                this.ordenamiento.personal.dotacion = personalAOrdenar.dotacion;
+                this.ordenamiento.personal.especialidad = personalAOrdenar.especialidad;
+                this.ordenamiento.personal.turno = personalAOrdenar.turno;
+                this.ordenamiento.turnoEfectivo = personalAOrdenar.turno;
+                this.ordenamiento.personal.franco = personalAOrdenar.franco;
+                this.ordenamiento.fecha = this.today.toLocaleString();
+
+            }else{
+                this.ordenamiento.turno = defaultTurnos()
+                this.ordenamiento.personal.apellido = '';
+                this.ordenamiento.personal.nombres ='';
+                this.ordenamiento.personal.dotacion ='';
+                this.ordenamiento.personal.especialidad ='';
+                this.ordenamiento.personal.turno ='';
+                this.ordenamiento.turnoEfectivo = '';
+                this.ordenamiento.personal.franco = -1
+                return
             }
-            this.turnosEncontrado = this.buscarTurno(this.personalEncontrado.turno,this.personalEncontrado.franco,this.today,this.turnos)
+            
+            if(this.ordenamiento.personal.turno.toLowerCase().includes("ciclo")){
+                const fechaHoy = this.today.toISOString().split("T")[0];
+                const [anio,mes] = fechaHoy.split("-")
+                this.personalSinDiagrama = await loadTarjetaPersonalSinDiagramaPorLegajoYMes(this.ordenamiento.personal.legajo,`${anio}-${mes}`) || defaultTarjetaPersonalSinDiagrama()
+                if(this.personalSinDiagrama._id){
+                    this.ordenamiento.turnoEfectivo = this.personalSinDiagrama.days[fechaHoy].tren
+                    this.ordenamiento.toma = this.personalSinDiagrama.days[fechaHoy].tomo
+                    this.ordenamiento.deja = this.personalSinDiagrama.days[fechaHoy].dejo
+                    this.ordenamiento.personal.franco = obtenerNumeroDia(this.personalSinDiagrama.days[fechaHoy].franco)
+                }
+            }
+            this.ordenamiento.turno = this.buscarTurno(this.ordenamiento.turnoEfectivo,this.ordenamiento.personal.franco,this.today,this.turnos)
+            this.ordenamiento.toma = this.ordenamiento.toma || this.ordenamiento.turno.toma
+            this.ordenamiento.deja = this.ordenamiento.deja || this.ordenamiento.turno.deja
+            
+            this.verificarSiNecesitaCancelacion()
+
+            // this.turnosEncontrado = this.buscarTurno(this.personalAOrdenar.turno,this.personalAOrdenar.franco,this.today,this.turnos)
+            
+        },
+        verificarOrdenamientos():boolean{
+            return this.ordenamientos.some(orden=>{                
+                if(orden.fecha.split(",")[0] === this.today.toLocaleDateString() && 
+                    orden.personal.legajo === this.ordenamiento.personal.legajo &&
+                    orden.tipo === "cancelacionDiagrama"){
+                    
+                    return true;
+                }
+                return false;
+            })
         },
         buscarTurno(turnoABuscar:string,franco:number,fecha:Date,turnos:ITurno[]){
             const diaLaboral = dia_laboral(franco,fecha.getDay());
@@ -549,25 +612,50 @@ export default defineComponent({
             let encontrados: ITurno = defaultTurnos();
             // let titular: IPersonal;
             // let diagrama: ITurno;
-            let turnosEncontrados = turnos.filter((turno)=> turno.turno.includes(turnoABuscar));
+            let turnosEncontrados = turnos.filter((turno)=> 
+                turno.turno.includes(turnoABuscar) && 
+                turno.itinerario === itinerarioType(this.today));
             
             if(turnosEncontrados.length === 1){
-                encontrados = turnosEncontrados[0]
+                [encontrados] = turnosEncontrados
             }else if(turnosEncontrados.length > 1){
                 [encontrados] = turnosEncontrados.filter(turno => {
                     const indexPunto = turno.turno.indexOf(".");
                     const diaLab = Number(turno.turno[indexPunto + 1]);
                     return diaLab === diaLaboral &&
                         turno.itinerario === itinerarioType(this.today) &&
-                        turno.circular === 'HD32' || turno.circular === 'Dic23'
-                })
+                        turno.circular === 'Jul24' //Provisorio
+                    })
+                    console.warn("TODO provisorio  'Jul24' ")
             }
-            if(encontrados.vueltas.length > 0){
+            return encontrados
+        },
+        verificarSiNecesitaCancelacion(){
+            this.message.activo = false;
+            const cancelacionCargada = this.verificarOrdenamientos()
+
+            if(cancelacionCargada && this.ordenamiento.tipo == 'cancelacionDiagrama'){
+                this.message = {
+                    activo: true,
+                    status: "danger",
+                    title: "Cancelacion de diagrama ya cargada",
+                    message: "El personal ya tiene una cancelacion para la fecha",
+                }
+                // setTimeout(()=>{
+                    //     this.message.activo = false
+                    // },5000)
+            }
+            // console.log(this.ordenamiento.turno.vueltas);
+            
+            if(!this.turnosEncontrado.ordenes && this.ordenamiento?.turno?.vueltas.length > 1 && !cancelacionCargada){
                 this.esDiagramado = true
+                
                 this.ordenamiento.tipo = 'cancelacionDiagrama'
             }
-            this.ordenamiento.turno.vueltas = encontrados.vueltas
-            return encontrados
+            if(cancelacionCargada && this.ordenamiento.tipo == 'ordenamiento'){
+                this.ordenamiento.turnoEfectivo = this.ordenamiento.turnoEfectivo + " Cancelado"
+                this.ordenamiento.turno = defaultTurnos()
+            }
         },
         agregarTren() {
             this.ordenamiento.turno.vueltas = [...this.ordenamiento.turno.vueltas,
@@ -580,14 +668,15 @@ export default defineComponent({
                     destino:'',
                     llega:'',
                     observaciones:''
-                }]
+                }
+            ]
         },
     },
     async mounted() {
         try {
             this.personales = await loadPersonales() || [];
             this.turnos = await loadTurnos() || [];
-            console.log(this.personalEncontrado);
+            this.ordenamientos = await loadOrdenamientos() ||[];
             
             newToken();
         } catch (error) {
