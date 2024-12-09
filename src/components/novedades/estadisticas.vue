@@ -22,7 +22,9 @@
                     </label>
                 </div>
             </div>
-            <input class="mx-5 col-1 h-2" type="date" name="today" id="today" v-model="fecha" @change="realizarCalculo()" />
+            <div>
+                <input class="form-control" type="date" name="today" id="today" v-model="fecha" @change="realizarCalculo()" />
+            </div>
             <div>
                 <select
                     id="circulares-select"
@@ -376,9 +378,9 @@
                     <td class="celda"><strong>{{ estadistico.totales.franco }}</strong></td>
                 </tr>
             </table>
-            <div class="chart-container" ref="chartContainer">
+            <!-- <div class="chart-container" ref="chartContainer">
                 <Pie ref="pieChart" :data="chartData" :options="chartOptions" />
-            </div>
+            </div> -->
         </div>
     </main>
 </template>
@@ -393,7 +395,6 @@ import { saveAs } from "file-saver";
 import { Novedad } from "../../interfaces/INovedades";
 import { newToken } from "../../services/signService";
 import {
-    itinerarioType,
     loadNovedades,
     loadPersonales,
     loadTurnos,
@@ -403,12 +404,13 @@ import { ITurno } from "../../interfaces/ITurno";
 import { IPersonal } from "../../interfaces/IPersonal";
 import { obtenerTiposCirculares } from "../../utils/turnos";
 import { obtenerDotaciones } from "../../utils/personal";
+import { itinerarioType } from "../../utils/fechas";
 // ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default defineComponent({
-    components: {
-        // Pie,
-    },
+    // components: {
+    //     // Pie,
+    // },
     data() {
         return {
             isLoading: true,
@@ -476,9 +478,9 @@ export default defineComponent({
             await this.$nextTick(); // Espera a que el DOM se actualice
 
             const table = this.$refs.dataTable as HTMLTableElement;
-            const chartContainer = this.$refs.chartContainer as HTMLDivElement;
+            // const chartContainer = this.$refs.chartContainer as HTMLDivElement;
 
-            if (!table || !chartContainer) {
+            if (!table ) {
                 console.error(
                     "El contenedor de la tabla o del gráfico no se encontró."
                 );
@@ -569,32 +571,38 @@ export default defineComponent({
             this.calcularValores(
                 "conductorElec",
                 this.contarPersonal("conductor electrico"),
-                this.contarTurnos("conductor electrico")
+                this.contarTurnos("conductor electrico"),
+                this.contarServicioIrregular("conductor electrico")
             );
             this.calcularValores(
                 "conductorDiesel",
                 this.contarPersonal("conductor diesel"),
-                this.contarTurnos("conductor diesel")
+                this.contarTurnos("conductor diesel"),
+                this.contarServicioIrregular("conductor diesel")
             );
             this.calcularValores(
                 "ayudanteConductor",
                 this.contarPersonal("ayudante conductor"),
-                this.contarTurnos("conductor diesel")
-            );//asumo que los diagramas de ayudantes a conductor son los mismo que los conductores
+                this.contarTurnos("conductor diesel"),//asumo que los diagramas de ayudantes a conductor son los mismo que los conductores
+                this.contarServicioIrregular("ayudante conductor")
+            );
             this.calcularValores(
                 "ayudanteHabilitado",
                 this.contarPersonal("ayudante habilitado"),
-                this.contarTurnos("ayudante habilitado")
+                this.contarTurnos("ayudante habilitado"),
+                this.contarServicioIrregular("ayudante habilitado")
             );
             this.calcularValores(
                 "guardaElec",
                 this.contarPersonal("guardatren electrico"),
-                this.contarTurnos("guardatren electrico")
+                this.contarTurnos("guardatren electrico"),
+                this.contarServicioIrregular("guardatren electrico")
             );
             this.calcularValores(
                 "guardaDiesel",
                 this.contarPersonal("guardatren diesel"),
-                this.contarTurnos("guardatren diesel")
+                this.contarTurnos("guardatren diesel"),
+                this.contarServicioIrregular("guardatren diesel")
             );
 
             //Calculo de enfermos
@@ -864,13 +872,13 @@ export default defineComponent({
         calcularValores(
             tipo: string,
             valorFisico: number,
-            valorDiagramas: number
+            valorDiagramas: number,
+            valorServicioIrregular: number
         ) {
             if (this.estadistico[tipo]) {
                 this.estadistico[tipo].fisico = valorFisico;
                 this.estadistico[tipo].diagramas = valorDiagramas;
-                this.estadistico[tipo].servicioIrregular =
-                    valorFisico - valorDiagramas;
+                this.estadistico[tipo].servicioIrregular = valorServicioIrregular;
             } else {
                 console.error(`Tipo ${tipo} no existe en estadistico`);
             }
@@ -948,17 +956,20 @@ export default defineComponent({
             return { fisico, diagramas, servicioIrregular };
         },
         contarTurnos(especialidad: string) {
-
-            return this.lstTurnos.filter(
-                (turno: ITurno) =>
+            return this.lstTurnos.filter((turno: ITurno) =>
                     turno.especialidad.toLowerCase() === especialidad.toLowerCase() &&
                     turno.circular === this.circularSeleccionada &&
                     turno.itinerario === this.itinerario &&
-                    this.dotacionesSeleccionadas.includes(turno.dotacion)
+                    this.dotacionesSeleccionadas.includes(turno.dotacion) 
+            ).length;
+        },
+        contarServicioIrregular(especialidad: string): number {
+            return this.lstPersonales.filter((personal: IPersonal) =>
+                personal.especialidad.toLowerCase() === especialidad.toLowerCase() &&
+                personal.turno.toLowerCase().includes('ciclo')
             ).length;
         },
         contarPersonal(especialidad: string) {
-
             return this.lstPersonales.filter(
                 (personal: IPersonal) =>
                     personal.especialidad.toLowerCase() === especialidad &&
