@@ -17,44 +17,60 @@ import { CambioTurno } from "@/interfaces/ICambioTurno";
  * @throws {Error} - Si ocurre un error durante el procesamiento, se captura y se muestra en la consola.
  */
 export function buscarPersonalACargo(
-            fecha: Date, 
-            inputDate: string, 
-            turnosAImprimir: ITurno[], 
-            personales: IPersonal[], 
-            novedades: Novedad[], 
-            cambiosTurnos: CambioTurno[]
-            ): void {
-        try {
-            turnosAImprimir.forEach((turno: ITurno) => {
-                const personal = filtroPersonal(turno.turno, fecha, personales);
-                novedades.forEach((novedad: Novedad) => {
-                    const {
-                    legajo,
-                    fechaBaja,
-                    fechaAlta,
-                    HNA,
-                    novedadInactiva,
-                    } = novedad;
-                    if (
-                        legajo === personal.legajo &&
-                        !novedadInactiva &&
-                        ((HNA && esFechaMayorIgual(inputDate, fechaBaja)) ||
-                        (esFechaMayorIgual(inputDate, fechaBaja) &&
-                        esFechaMayorIgual(fechaAlta, inputDate)))
-                    ){
-                        personal.nombres = obtenerNombreConReemplazo(novedad, inputDate, cambiosTurnos);
+    fecha: Date, 
+    inputDate: string, 
+    turnosAImprimir: ITurno[], 
+    personales: IPersonal[], 
+    novedades: Novedad[], 
+    cambiosTurnos: CambioTurno[],
+): Record<string, Novedad > {
+    try {
+        const resultado: Record<string, Novedad > = {};
+
+        turnosAImprimir.forEach((turno: ITurno) => {
+            // Inicializa el valor por defecto como null para el turno actual
+            // resultado[turno.turno] = null;
+
+            // Obtiene el personal relacionado con este turno
+            const personal = filtroPersonal(turno.turno, fecha, personales);
+
+            if (!personal) {
+                console.warn(`No se encontró personal para el turno: ${turno.turno}`);
+                return;
+            }
+
+            novedades.forEach((novedad: Novedad) => {
+                const { legajo, fechaBaja, fechaAlta, HNA, novedadInactiva } = novedad;
+
+                // Verifica si la novedad es activa y está relacionada con el personal
+                const tieneNovedadActiva = !novedadInactiva &&
+                    (
+                        (HNA && esFechaMayorIgual(inputDate, fechaBaja)) ||
+                        (esFechaMayorIgual(inputDate, fechaBaja) && esFechaMayorIgual(fechaAlta, inputDate))
+                    );
+
+                if (legajo === personal.legajo && tieneNovedadActiva) {
+                    // Si el personal está sin cubrir, asocia la novedad al turno
+                    personal.nombres = obtenerNombreConReemplazo(novedad, inputDate, cambiosTurnos);
+
+                    if (personal.nombres === "Sin Cubrir") {
+                        resultado[turno.turno] = novedad;
                     }
-                });
-                if (personal.nombres !== undefined) {
-                    const cambiado = buscarCambioTurno(cambiosTurnos, inputDate, personal.legajo);
-                    turno.personal = cambiado
-                    ? `${cambiado.apellido} ${cambiado.nombres}`
-                    : personal.nombres;
                 }
             });
-        } catch (error) {
-            console.error("Error en buscarPersonalACargo:", error);
-        }
+
+            // Maneja cambios de turno si es necesario
+            const cambiado = buscarCambioTurno(cambiosTurnos, inputDate, personal.legajo);
+            turno.personal = cambiado
+                ? `${cambiado.apellido} ${cambiado.nombres}`
+                : personal.nombres;
+        });
+
+        return resultado;
+    } catch (error) {
+        console.error("Error en buscarTurnosSinCubrir:", error);
+        return {};
+    }
 }
 
 /**
