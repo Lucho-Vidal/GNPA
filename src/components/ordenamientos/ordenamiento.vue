@@ -5,8 +5,8 @@
                 Registro de ordenamiento al Personal de Abordo
             </h2>
             <div class="d-flex justify-content-end">
-                <Button class="btn btn-primary mx-3" @click="$router.push('/newOrdenamiento')"
-                    >Nuevo ordenamiento</Button>
+                <button class="btn btn-primary mx-3" @click="$router.push('/newOrdenamiento')"
+                    >Nuevo ordenamiento</button>
                     
                 <button class="btn btn-warning" @click.prevent="abrirModal()">
                     Filtrar novedades
@@ -206,12 +206,14 @@
             >
                 <thead>
                     <tr>
-                        <th class="col-1" colspan="1">Consecutivo - Fecha</th>
+                        <th class="col-1" colspan="1">Fecha y hora</th>
+                        <th class="col-1" colspan="1">Tipo</th>
                         <th class="col-1" colspan="1">Legajo</th>
                         <th class="col-1" colspan="1">Apellido</th>
                         <th class="col-1" colspan="1">Nombres</th>
                         <th class="col-1" colspan="1">Base</th>
                         <th class="col-1" colspan="1">Turno</th>
+                        <th class="col-1" colspan="1">Turno Ef</th>
                         <th class="col-1" colspan="1">Franco</th>
 
                         <th class="col-1">Borrar</th>
@@ -222,26 +224,20 @@
                     :key="index"
                 >
                     <tr class="Small shadow">
-                        <td class="col-1" rowspan="2">
-                            {{ `${orden.personal._id} - ${new Date(orden.fecha + " 12:00").toLocaleDateString()}` }}
-                        </td>
+                        <td class="col-1" rowspan="2">{{ orden.fecha }}</td>
+                        <td class="col-1">{{ orden.tipo === 'ordenamiento' ?
+                                    'Ordenamiento' :
+                                orden.tipo === 'informe' ?
+                                    'Informe' :
+                                orden.tipo === 'cancelacionDiagrama' ?
+                                    'Cancelación Diagrama': ''}}</td>
                         <td class="col-1">{{ orden.personal.legajo }}</td>
                         <td class="col-1">{{ orden.personal.apellido }}</td>
                         <td class="col-1">{{ orden.personal.nombres }}</td>
                         <td class="col-1">{{ orden.personal.dotacion }}</td>
-                        <td class="col-1">
-                            {{
-                                orden.personal.turno +
-                                " / " +
-                                dia_laboral(
-                                    orden.personal.franco,
-                                    today.getDay()
-                                )
-                            }}
-                        </td>
-                        <td class="col-1">
-                            {{ obtenerDiaSemana(orden.personal.franco) }}
-                        </td>
+                        <td class="col-1">{{orden.personal.turno +" / " +dia_laboral(orden.personal.franco,today.getDay())}}</td>
+                        <td class="col-1">{{ orden.turnoEfectivo }}</td>
+                        <td class="col-1">{{ obtenerDiaSemana(orden.personal.franco) }}</td>
                         <td class="col-1" rowspan="2">
                             <i class="material-icons cursor-hand rojo" @click="deleteOrdenamiento(orden._id, index)">delete_forever</i>
                         </td>
@@ -277,7 +273,7 @@ export default defineComponent({
             checkboxDotacion: [] as string[],
             checkboxEspecialidad: [] as string[],
             checkboxDescubierto: false,
-            checkboxHoy: true,
+            checkboxHoy: false,
             username: "" as string,
             today: new Date(),
             search: "" as string,
@@ -288,8 +284,6 @@ export default defineComponent({
             try {
                 const res = await getOrdenamientos();
                 this.ordenamientos = res.data;
-                console.log(this.ordenamientos);
-
                 this.filtrar();
             } catch (error) {
                 handleRequestError(error as AxiosError);
@@ -386,11 +380,7 @@ export default defineComponent({
             this.$router.push(`/editNovedades/${id}`);
         },
         viewDetail(novedad: Novedad) {
-            if (novedad.viewDetail) {
-                novedad.viewDetail = false;
-            } else {
-                novedad.viewDetail = true;
-            }
+            novedad.viewDetail = !novedad.viewDetail;
         },
         dia_laboral(diaLaboral: number, hoy: number) {
             /*   # devuelve el día de la semana como un número entero donde el Domingo
@@ -413,6 +403,7 @@ export default defineComponent({
             }
         },
         filtrar() {
+            
             let cDotacion = ["PC", "LLV", "TY", "LP", "K5", "RE", "CÑ", "AK"];
             let cEspecialidad = [
                 "Conductor electrico",
@@ -422,7 +413,7 @@ export default defineComponent({
                 "Ayudante conductor",
                 "Guardatren electrico",
             ];
-            let filtrar = this.checkboxHoy;
+            let filtrar = false;
             let ordenamientosFiltrados: Ordenamiento[] = this.ordenamientos;
 
             if (this.search.length !== 0) {
@@ -456,15 +447,13 @@ export default defineComponent({
                 );
             }
             if (this.checkboxHoy) {
-                ordenamientosFiltrados = ordenamientosFiltrados.filter(
-                    (orden: Ordenamiento) => {
-                        return esFechaIgual(orden.fecha, this.today.toString());
+                    ordenamientosFiltrados = ordenamientosFiltrados.filter((orden: Ordenamiento) => {
+                        return esFechaIgual(orden.fecha.split(",")[0], this.today.toLocaleDateString());
                     }
                 );
             }
-            this.ordenamientosFiltrados = this.ordenarDescendente(
-                ordenamientosFiltrados
-            );
+
+            this.ordenamientosFiltrados = this.ordenarDescendente(ordenamientosFiltrados);
         },
     },
     created() {
