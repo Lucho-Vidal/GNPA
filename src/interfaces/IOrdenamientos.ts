@@ -5,6 +5,9 @@ export interface Ordenamiento{
     _id: string;
     fecha:string;
     tipo: string;
+    turnoEfectivo:string;
+    toma:string;
+    deja:string
     personal: IPersonal;
     // trenes: Array<Vueltas>,
     turno: ITurno;
