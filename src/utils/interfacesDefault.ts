@@ -1,9 +1,10 @@
 import { CambioTurno } from "@/interfaces/ICambioTurno";
 import { Novedad } from "@/interfaces/INovedades";
+import { Ordenamiento } from "@/interfaces/IOrdenamientos";
 import { IPersonal } from "@/interfaces/IPersonal";
 import { IPersonalSinDiagrama } from "@/interfaces/IPersonalSinDiagrama";
 import { ITarjetaPersonalSinDiagrama, Jornada } from "@/interfaces/ITarjetaPersonalSinDiagrama";
-import { ITurno, Vueltas } from "@/interfaces/ITurno";
+import { ITurno, TrenesDescubiertos, Vueltas } from "@/interfaces/ITurno";
 
 export function defaultPersonal(): IPersonal {
     return {
@@ -12,7 +13,7 @@ export function defaultPersonal(): IPersonal {
         apellido: '',
         nombres: '',
         turno: '',
-        franco: 0,
+        franco: -1,
         especialidad: '',
         dotacion: '',
         observaciones: '',
@@ -130,6 +131,7 @@ export function defaultTarjetaPersonalSinDiagrama(): ITarjetaPersonalSinDiagrama
 export function defaultJornada(): Jornada {
     return {
         tren: '', 
+        franco: '',
         desde: '', 
         hasta: '', 
         disponibleHora: '', 
@@ -138,8 +140,47 @@ export function defaultJornada(): Jornada {
         totalHoras: '', 
         dia_laboral: null,
         observaciones: '',
-        editable: true,
-        estilo: false, 
+        editable: false,
+        deBaja: false, 
+        relevando:false,
         nroNovedad: null
     };
+}
+export function defaultTrenesDescubiertos(): TrenesDescubiertos {
+    return {
+        vueltaA: 0,
+        turno: '',
+        trenA: '',
+        referA: '',
+        origenA: '',
+        saleA: '',
+        destinoA: '',
+        llegaA: '',
+        observacionesA: '',
+        vueltaD: 0,
+        trenD: '',
+        referD: '',
+        origenD: '',
+        saleD: '',
+        destinoD: '',
+        llegaD: '',
+        observacionesD: '',
+        viewDetail: false,
+        resaltar: false,
+        detalle:''
+    };
+}
+export function defaultOrdenamiento(): Ordenamiento {
+    return {
+        _id:'',
+        fecha: '',
+        tipo: 'ordenamiento',
+        personal: defaultPersonal(),
+        turno: defaultTurnos(),
+        detalle: '',
+        turnoEfectivo: '',
+        toma: '',
+        deja: '',
+
+    }
 }
