@@ -23,3 +23,25 @@ export interface Vueltas {
     llega: string;
     observaciones: string;
 }
+export interface TrenesDescubiertos {
+    turno: string;
+    vueltaA: number;
+    trenA: string;
+    referA: string;
+    origenA: string;
+    saleA: string;
+    destinoA: string;
+    llegaA: string;
+    observacionesA: string;
+    vueltaD: number;
+    trenD: string;
+    referD: string;
+    origenD: string;
+    saleD: string;
+    destinoD: string;
+    llegaD: string;
+    observacionesD: string;
+    viewDetail:boolean;
+    resaltar:boolean;
+    detalle:string;
+}
