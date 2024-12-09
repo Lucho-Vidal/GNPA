@@ -3,9 +3,8 @@
         <h1>
             {{  titulo }}
         </h1>
-        <div class="container d-flex">
-            <div
-                class="justify-content-center alert row"
+        <div class="container">
+            <div class="justify-content-center alert row"
                 :class="[
                     message.status == 'danger'
                         ? 'alert-danger'
@@ -14,20 +13,10 @@
                         : message.status == 'warning'
                         ? 'alert-warning'
                         : '',
-                ]"
-                role="alert"
-                v-if="message.activo"
-            >
-                <h4 class="alert-heading">{{ message.title }}</h4>
+                ]" role="alert" v-if="message.activo">
+                <h4 class="alert-heading">ATENCIÓN! {{ message.title }}</h4>
                 <hr />
                 {{ message.message }}
-                <button
-                    v-if="idNovedad !== 0"
-                    class="btn btn-danger mx-3 col-2"
-                    @click="goToEdit(idNovedad)"
-                >
-                    Ir a la novedad
-                </button>
             </div>
         </div>
         
