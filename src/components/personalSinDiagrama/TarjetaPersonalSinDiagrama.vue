@@ -211,7 +211,7 @@
                         <!-- Columna Diagrama -->
                         <td class="celdaInput " @click="toggleEdit('tren', index)">
                             <select 
-                                v-if="getJornadaForDay(day).editable && editField === 'tren' && editIndex === index"
+                                v-if="(!getJornadaForDay(day).deBaja || !getJornadaForDay(day).relevando) && editField === 'tren' && editIndex === index"
                                 name="diagrama" 
                                 id="diagrama"
                                 v-model="editValue"
@@ -229,7 +229,7 @@
 
                         <!-- Columna Disponible a la Hora -->
                         <td class="celdaInput " @click="toggleEdit('disponibleHora', index)">
-                            <input v-if="getJornadaForDay( day).editable && editField === 'disponibleHora' && editIndex === index" 
+                            <input v-if="(!getJornadaForDay(day).deBaja || !getJornadaForDay(day).relevando) && editField === 'disponibleHora' && editIndex === index" 
                                     type="time" 
                                     v-model="editValue" 
                                     :ref="'inputField-' + index"
@@ -241,7 +241,7 @@
 
                         <!-- Columna Tomó -->
                         <td class="celdaInput " @click="toggleEdit('tomo', index)">
-                            <input v-if="getJornadaForDay( day).editable && editField === 'tomo' && editIndex === index" 
+                            <input v-if="(!getJornadaForDay(day).deBaja || !getJornadaForDay(day).relevando) && editField === 'tomo' && editIndex === index" 
                                     type="time" 
                                     v-model="editValue" 
                                     :ref="'inputField-' + index" 
@@ -253,7 +253,7 @@
 
                         <!-- Columna Dejó -->
                         <td class="celdaInput " @click="toggleEdit('dejo', index)">
-                            <input v-if="getJornadaForDay( day).editable && editField === 'dejo' && editIndex === index" 
+                            <input v-if="(!getJornadaForDay(day).deBaja || !getJornadaForDay(day).relevando )&& editField === 'dejo' && editIndex === index" 
                                     type="time" 
                                     v-model="editValue" 
                                     :ref="'inputField-' + index"
@@ -264,7 +264,7 @@
                         </td>
                         <!-- Columna Total horas trabajadas -->
                         <td class="celdaInput" @click="toggleEdit('totalHoras', index)">
-                            <input v-if="getJornadaForDay( day).editable && editField === 'totalHoras' && editIndex === index" 
+                            <input v-if="(!getJornadaForDay(day).deBaja || !getJornadaForDay(day).relevando) && editField === 'totalHoras' && editIndex === index" 
                                     type="time" 
                                     v-model="editValue" 
                                     :ref="'inputField-' + index"
@@ -285,9 +285,9 @@
                                 {{ getJornadaForDay( day).dia_laboral === 0 ? "-" : getJornadaForDay( day).dia_laboral?.toString() || '' }}
                                 {{ getJornadaForDay( day).observaciones || '-' }}
                             </span>
-                            <button class="btn btn-primary" v-if="getJornadaForDay(day).nroNovedad" 
+                            <button class="btn btn-primary  btn-wide" v-if="getJornadaForDay(day).nroNovedad" 
                                 @click="goToNovedad(getJornadaForDay( day).nroNovedad)">
-                                Ir a la novedad <strong> {{ getJornadaForDay( day).nroNovedad }} </strong>
+                                Ir a la novedad [<strong> {{ getJornadaForDay( day).nroNovedad }}] </strong>
                             </button>
                         </td>
                     </tr>
@@ -429,9 +429,8 @@ export default defineComponent({
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].dejo = '';
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].totalHoras = '';
                         // this.tarjetaPersonalSinDiagrama.days[fechaStr].observaciones = '';
-                        this.tarjetaPersonalSinDiagrama.days[fechaStr].editable = true;
-                        this.tarjetaPersonalSinDiagrama.days[fechaStr].deBaja = true;
-                        this.tarjetaPersonalSinDiagrama.days[fechaStr].relevando = true;
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].deBaja = false;
+                        this.tarjetaPersonalSinDiagrama.days[fechaStr].relevando = false;
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].estilo = false;
                         this.tarjetaPersonalSinDiagrama.days[fechaStr].nroNovedad = null;
                     }
@@ -547,6 +546,11 @@ export default defineComponent({
         toggleEdit(field: string, index: number) {
             const jornada = this.getJornadaForDay(this.fechasDelMes[index]);
             if (jornada) {
+                if ((jornada.deBaja || jornada.relevando) && field !== 'observaciones') {
+                    alert("Editar desde la novedad asignada en este día");
+                    return
+                }
+                
                 this.editField = field;
                 this.editIndex = index;
 
@@ -557,9 +561,6 @@ export default defineComponent({
                     this.editValue = '-'; // Valor por defecto si no existe el campo
                 }
 
-                if (!jornada.editable && field !== 'observaciones') {
-                    alert("Editar desde la novedad asignada en este día");
-                }
 
                 this.$nextTick(() => {
                     const inputElement = this.$refs['inputField-' + index] as HTMLInputElement | null;
@@ -705,6 +706,8 @@ export default defineComponent({
                 novedad.remplazo.forEach((remplazo: Remplazo) => {
                     if (remplazo.legajo === this.personal.legajo && esFechaMayorIgual(dia, remplazo.inicioRelevo) && 
                         (remplazo.finRelevo === '' || esFechaMayorIgual(remplazo.finRelevo, dia))) {
+                        this.tarjetaPersonalSinDiagrama.days[dia].deBaja = false
+                        this.tarjetaPersonalSinDiagrama.days[dia].relevando = true;
                         this.registrarRelevo(dia, novedad,  fecha);
                     }
                 });
@@ -797,7 +800,6 @@ export default defineComponent({
             this.tarjetaPersonalSinDiagrama.days[dia].nroNovedad = novedad._id;
             this.tarjetaPersonalSinDiagrama.days[dia].deBaja = true;
             this.tarjetaPersonalSinDiagrama.days[dia].relevando = false;
-            this.tarjetaPersonalSinDiagrama.days[dia].editable = false;
         },
     },
     async mounted() {
@@ -833,80 +835,97 @@ export default defineComponent({
 });
 </script>
 
-<style scoped>
+    <style scoped>
 
-main{
-    margin-top: 5rem;
-    font-size: 20px;
-}
-.table-bordered {
-  border: 2px solid #aaa; /* Borde más grueso */
-}
+    main{
+        margin-top: 5rem;
+        font-size: 20px;
+    }
+    .table-bordered {
+    border: 2px solid #aaa; /* Borde más grueso */
+    }
 
-.table th,
-.table td {
-  text-align: center; /* Alineación centrada */
+    .table th,
+    .table td {
+    text-align: center; /* Alineación centrada */
 
-}
-.layout {
-    /* width: 100%; */
-    display: flex;
-    /* gap: 16px; */
-    justify-content: space-between;
-}
+    }
+    .layout {
+        /* width: 100%; */
+        display: flex;
+        /* gap: 16px; */
+        justify-content: space-between;
+    }
 
-th {
-    background-color: #ddd;
-}
+    th {
+        background-color: #ddd;
+    }
 
-th,
-td {
-    padding: 5px; 
-}
-td{
-    margin-top: 3px;
-}
-input{
-    widows: 100%;
-}
-.barraBotones{
-    display:flex;
-    justify-content: end;
-    margin-bottom: 1rem;
-    margin-right: 1rem;
-}
-/* .barraBotones > button{
-    margin-top: 2px;
-} */
-.modal-content{
-    width: 100%;
-}
-.modal-ancho-personalizado {
-    max-width: 90%; /* Cambia el valor según lo necesites */
-}
-
-.dia{
-    display:flex;
-    justify-content: end;
-}
-.celdaFecha{
-    padding: 0;
-}
-.celdaInput{
-    padding: 0;
-}
-.celdaInput input {
-    width: 100%;
-    box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
-}
-.celdaInputAncho {
-    width: 100%;
-    text-align: left;
-    margin-top: 2px;
-}
-.text-red td {
-    color: red; /* Asegurar que el estilo también se aplique a los td dentro del tr */
-    font-weight: bold;
-}
+    th,
+    td {
+        padding: 5px; 
+    }
+    td{
+        margin-top: 3px;
+    }
+    input{
+        widows: 100%;
+    }
+    .barraBotones{
+        display:flex;
+        justify-content: end;
+        margin-bottom: 1rem;
+        margin-right: 1rem;
+    }
+    /* .barraBotones > button{
+        margin-top: 2px;
+    } */
+    .modal-content{
+        width: 100%;
+    }
+    .modal-ancho-personalizado {
+        max-width: 90%; /* Cambia el valor según lo necesites */
+    }
+    .dia{
+        display:flex;
+        justify-content: end;
+    }
+    .celdaFecha{
+        padding: 0;
+    }
+    .celdaInput{
+        padding: 0;
+        margin: 0;
+    }
+    td > input{
+        height: 43px;
+    }
+    td > select{
+        height: 43px;
+    }
+    .celdaInput input {
+        width: 100%;
+        box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+        margin: 0;
+    }
+    .celdaInputAncho {
+        width: 100%;
+        height: 100%;
+        text-align: left;
+        margin: 0;
+        /* margin-top: 2px; */
+    }
+    .btn-wide {
+        width: 220px; /* Ajusta el ancho */
+        height: 50px; /* Ajusta la altura */
+        margin: 2px;
+        display: flex;
+        justify-content: center; /* Centra horizontalmente */
+        align-items: center; /* Centra verticalmente */
+    }
+    .text-red td {
+        color: red; /* Asegurar que el estilo también se aplique a los td dentro del tr */
+        font-weight: bold;
+    }
 
 </style>
