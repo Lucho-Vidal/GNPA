@@ -34,6 +34,15 @@
                                 </div>
                                 Personal por base
                             </router-link>
+                            <router-link
+                                class="nav-link"
+                                to="/listadoTrenesACubrir"
+                            >
+                                <div class="sb-nav-link-icon">
+                                    <i class="fa-solid fa-list-ul"></i>
+                                </div>
+                                Trenes sin cubrir
+                            </router-link>
                             <router-link class="nav-link" to="/" disabled>
                                 <div class="sb-nav-link-icon">
                                     <i class="fa-regular fa-rectangle-list"></i>
