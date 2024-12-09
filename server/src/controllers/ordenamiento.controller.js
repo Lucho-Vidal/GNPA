@@ -1,5 +1,5 @@
 import CambioTurno from "../models/cambioTurno";
-import Ordenamiento from "../models/ordenamiento";
+import Ordenamiento from "../models/Ordenamiento";
 
 export const getOrdenamientos = async (req, res) => {
     try {
@@ -39,8 +39,11 @@ export const createOrdenamiento = async (req, res) => {
             
             fecha,
             tipo,
+            turnoEfectivo,
+            toma,
+            deja,
             personal,
-            trenes,
+            turno,
             detalle
         } = req.body;
         console.log(req.body);
@@ -50,8 +53,11 @@ export const createOrdenamiento = async (req, res) => {
             
             fecha,
             tipo,
+            turnoEfectivo,
+            toma,
+            deja,
             personal,
-            trenes,
+            turno,
             detalle
         });
 
