@@ -297,6 +297,13 @@ const routes: RouteRecordRaw[] = [
         beforeEnter: requireAuth,
     },
     {
+        path: "/listadoTrenesACubrir",
+        name: "listadoTrenesACubrir",
+        meta: { title: "GNPA - Listado de personal" },
+        component: () => import("@/components/appTrabajo/lstCubrir.vue"),
+        beforeEnter: requireAuth,
+    },
+    {
         path: "/pdf/:rutaPdf",
         name: "pdf",
         meta: { title: "GNPA - PDF" },
