@@ -318,11 +318,14 @@
                                     <option >
                                         PS
                                     </option>
+                                    <option >
+                                        W
+                                    </option>
                             </select>
                         </td>
                         <td>
                             <input
-                                type="number"
+                                type="text"
                                 class="form-control"
                                 name="tren"
                                 v-model="tren.tren"
@@ -388,16 +391,11 @@
             </table>
             <div>
                 <button class="btn btn-primary col-1 m-2">Guardar</button>
-                <button
-                    class="btn btn-secondary col-1 m-2"
-                    @click="$router.push('/ordenamiento')"
-                >
-                    Cerrar
-                </button>
+                <button class="btn btn-secondary col-1 m-2" @click="goBack">Cerrar</button>
             </div>
             
         </form>
-        <div v-if="esDiagramado && !turnosEncontrado.ordenes" class="container mt-5">
+        <div v-if="esDiagramado && !ordenamiento.turno.ordenes" class="container mt-5">
             <h5>El personal es diagramado, deberá cargar una cancelacion de diagrama para ordenarlo. </h5>
         </div>
     </main>
@@ -409,7 +407,7 @@ import { AxiosError } from "axios";
 import { IPersonal } from "../../interfaces/IPersonal";
 import { Ordenamiento } from "../../interfaces/IOrdenamientos";
 import { Itinerario } from "../../interfaces/Itinerario";
-import { ITurno } from '../../interfaces/ITurno';
+import { ITurno, TrenesDescubiertos } from '../../interfaces/ITurno';
 import { createOrdenamiento } from '../../services/ordenamientoService';
 import { newToken } from "../../services/signService";
 import { guardarRegistro, loadOrdenamientos, loadPersonales, loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from '../../utils/funciones';
@@ -426,11 +424,12 @@ export default defineComponent({
             personalAOrdenar: {} as IPersonal | undefined,
             personalEncontrado: [] as IPersonal[],
             personalSinDiagrama: {} as ITarjetaPersonalSinDiagrama,
+            vuelta: null as TrenesDescubiertos | null, // Declara la variable para almacenar los datos
 
             turnos:[] as ITurno[],
-            turnosEncontrado:{} as ITurno,
+            // turnosEncontrado:{} as ITurno,
             dotacionesPermitidas: [
-                'PC','ALL','K5','RE','TY','BO','GW','AK','LLV','MG','ZZ','CÑ','MN','LB','QL','BZ','VE','OA','LP','CY','FV','BQ','JG'
+                'PC','ALL','K5','KM5','RE','TY','BO','GW','AK','LLV','MG','ZZ','CÑ','MN','LB','QL','BZ','VE','OA','LP','CY','FV','BQ','JG'
             ] as string[],
             ordenamiento: defaultOrdenamiento() as Ordenamiento,
             ordenamientos: [] as Ordenamiento[],
@@ -468,6 +467,7 @@ export default defineComponent({
             //     // }
             //     return;
             // }
+            this.ordenamiento.fecha = this.today.toLocaleString();
             if (this.message.activo){
                 return
             }
@@ -482,7 +482,8 @@ export default defineComponent({
                 guardarRegistro(this.today, "Ordenamiento");
 
                 // Redireccionar
-                this.$router.push({ name: "ordenamiento" });
+                // this.$router.push({ name: "ordenamiento" });
+                this.goBack()
             } catch (error) {
                 this.handleRequestError(error as AxiosError);
             }
@@ -528,6 +529,11 @@ export default defineComponent({
             this.mostrarModalSearch = false;
             this.search = "";
         },
+        goBack() {
+            const fromRoute = localStorage.getItem('fromRoute') || '/ordenamiento'; // Recuperar la ruta o usar 'ordenamientos'
+            localStorage.removeItem('fromRoute')
+            this.$router.push(fromRoute);
+        },
         searchPersonal() {
             /* Este método funciona dentro del modal, al escribir dentro del input filtra por
         nombre y apellido el personal */
@@ -547,7 +553,7 @@ export default defineComponent({
             this.message.status = "";
             this.message.activo = false;
             // this.ordenamiento = defaultOrdenamiento()
-            this.ordenamiento.turno = defaultTurnos()
+            // this.ordenamiento.turno = defaultTurnos()
             const personalAOrdenar = this.personales.find((personal: IPersonal) => {
                 return (personal.legajo == this.ordenamiento.personal.legajo);
             }) ;
@@ -561,10 +567,9 @@ export default defineComponent({
                 this.ordenamiento.personal.turno = personalAOrdenar.turno;
                 this.ordenamiento.turnoEfectivo = personalAOrdenar.turno;
                 this.ordenamiento.personal.franco = personalAOrdenar.franco;
-                this.ordenamiento.fecha = this.today.toLocaleString();
 
             }else{
-                this.ordenamiento.turno = defaultTurnos()
+                // this.ordenamiento.turno = defaultTurnos()
                 this.ordenamiento.personal.apellido = '';
                 this.ordenamiento.personal.nombres ='';
                 this.ordenamiento.personal.dotacion ='';
@@ -575,8 +580,8 @@ export default defineComponent({
                 return
             }
             
+            const fechaHoy = this.today.toISOString().split("T")[0];
             if(this.ordenamiento.personal.turno.toLowerCase().includes("ciclo")){
-                const fechaHoy = this.today.toISOString().split("T")[0];
                 const [anio,mes] = fechaHoy.split("-")
                 this.personalSinDiagrama = await loadTarjetaPersonalSinDiagramaPorLegajoYMes(this.ordenamiento.personal.legajo,`${anio}-${mes}`) || defaultTarjetaPersonalSinDiagrama()
                 if(this.personalSinDiagrama._id){
@@ -586,7 +591,33 @@ export default defineComponent({
                     this.ordenamiento.personal.franco = obtenerNumeroDia(this.personalSinDiagrama.days[fechaHoy].franco)
                 }
             }
-            this.ordenamiento.turno = this.buscarTurno(this.ordenamiento.turnoEfectivo,this.ordenamiento.personal.franco,this.today,this.turnos)
+            const turnoPersonalSeleccionado = this.buscarTurno(this.ordenamiento.turnoEfectivo,this.ordenamiento.personal.franco,this.today,this.turnos)
+            if(!this.ordenamiento.turno.vueltas[0].tren){
+                this.ordenamiento.turno = turnoPersonalSeleccionado
+            }else{
+                this.ordenamiento.turno.ordenes = turnoPersonalSeleccionado.ordenes
+                this.ordenamiento.toma = turnoPersonalSeleccionado.toma
+                this.ordenamiento.deja = turnoPersonalSeleccionado.deja
+                
+                this.ordenamiento.turno.turno = turnoPersonalSeleccionado.turno
+                this.ordenamiento.turno.itinerario = turnoPersonalSeleccionado.itinerario
+                this.ordenamiento.turno.circular = turnoPersonalSeleccionado.circular
+                // this.ordenamiento.turno.personal = turnoPersonalSeleccionado.personal
+                this.ordenamiento.turno.toma = turnoPersonalSeleccionado.toma
+                this.ordenamiento.turno.deja = turnoPersonalSeleccionado.deja
+                this.ordenamiento.turno.dotacion = turnoPersonalSeleccionado.dotacion
+                this.ordenamiento.turno.especialidad = turnoPersonalSeleccionado.especialidad
+
+                // const long = this.ordenamiento.turno.vueltas.length
+                // const longB = turnoPersonalSeleccionado.vueltas.length
+                // let j = 0;
+                // for(let i=long;i<long + longB -1;i++){
+                //     this.agregarTren()
+                //     this.ordenamiento.turno.vueltas[i] = turnoPersonalSeleccionado.vueltas[j]
+                //     j++
+                // }
+
+            }
             this.ordenamiento.toma = this.ordenamiento.toma || this.ordenamiento.turno.toma
             this.ordenamiento.deja = this.ordenamiento.deja || this.ordenamiento.turno.deja
             
@@ -646,14 +677,15 @@ export default defineComponent({
                     // },5000)
             }
             // console.log(this.ordenamiento.turno.vueltas);
-            
-            if(!this.turnosEncontrado.ordenes && this.ordenamiento?.turno?.vueltas.length > 1 && !cancelacionCargada){
+            console.log(this.ordenamiento.turno);
+            console.log(!this.ordenamiento.turno.ordenes , this.ordenamiento?.turno?.vueltas.length > 1 , !cancelacionCargada)
+            if(!this.ordenamiento.turno.ordenes && this.ordenamiento?.turno?.vueltas.length > 1 && !cancelacionCargada){
                 this.esDiagramado = true
                 
                 this.ordenamiento.tipo = 'cancelacionDiagrama'
             }
             if(cancelacionCargada && this.ordenamiento.tipo == 'ordenamiento'){
-                this.ordenamiento.turnoEfectivo = this.ordenamiento.turnoEfectivo + " Cancelado"
+                this.ordenamiento.turnoEfectivo = this.ordenamiento.turnoEfectivo + "- Cancelado"
                 this.ordenamiento.turno = defaultTurnos()
             }
         },
@@ -661,8 +693,8 @@ export default defineComponent({
             this.ordenamiento.turno.vueltas = [...this.ordenamiento.turno.vueltas,
                 {
                     vuelta: 0,
-                    tren: "",
                     refer:'',
+                    tren: "",
                     origen:'',
                     sale:'',
                     destino:'',
@@ -676,11 +708,44 @@ export default defineComponent({
         try {
             this.personales = await loadPersonales() || [];
             this.turnos = await loadTurnos() || [];
-            this.ordenamientos = await loadOrdenamientos() ||[];
+            this.ordenamientos = await loadOrdenamientos() || [];
             
             newToken();
         } catch (error) {
             console.error(error);
+        }
+    },
+    created() {
+        const queryData = this.$route.query.data;
+        if (queryData) {
+            this.vuelta = JSON.parse(queryData as string); // Convierte el string JSON de nuevo a un objeto
+
+            const long:number = this.ordenamiento.turno?.vueltas.length
+            console.log("🚀 ~ created ~ this.ordenamiento.turno?.vueltas?.[long -1].tren:", this.ordenamiento.turno?.vueltas)
+            if(!this.ordenamiento.turno?.vueltas?.[long -1].tren){
+                // this.agregarTren()
+                console.log("🚀 ~ created ~ agregarTren:")
+            }
+
+            if(this.vuelta){
+                this.ordenamiento.turno.vueltas[0].vuelta = this.vuelta?.vueltaA
+                this.ordenamiento.turno.vueltas[0].refer = this.vuelta?.referA
+                this.ordenamiento.turno.vueltas[0].tren = this.vuelta?.trenA
+                this.ordenamiento.turno.vueltas[0].origen = this.vuelta?.origenA
+                this.ordenamiento.turno.vueltas[0].sale = this.vuelta?.saleA
+                this.ordenamiento.turno.vueltas[0].destino = this.vuelta?.destinoA
+                this.ordenamiento.turno.vueltas[0].llega = this.vuelta?.llegaA
+                this.ordenamiento.turno.vueltas[0].observaciones = this.vuelta?.observacionesA
+                this.agregarTren()
+                this.ordenamiento.turno.vueltas[1].vuelta = this.vuelta?.vueltaD
+                this.ordenamiento.turno.vueltas[1].refer = this.vuelta?.referD
+                this.ordenamiento.turno.vueltas[1].tren = this.vuelta?.trenD
+                this.ordenamiento.turno.vueltas[1].origen = this.vuelta?.origenD
+                this.ordenamiento.turno.vueltas[1].sale = this.vuelta?.saleD
+                this.ordenamiento.turno.vueltas[1].destino = this.vuelta?.destinoD
+                this.ordenamiento.turno.vueltas[1].llega = this.vuelta?.llegaD
+                this.ordenamiento.turno.vueltas[1].observaciones = this.vuelta?.observacionesD
+            }
         }
     },
     components: {
