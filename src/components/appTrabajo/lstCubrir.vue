@@ -80,6 +80,7 @@
                                         <th >Destino</th>
                                         <th >Llega</th>
                                         <th >Observaciones</th>
+                                        <th >Ordenar</th>
                                     </tr>
                                 </thead>
                             <tbody v-for="(vuelta, index) in trenesSinCubrir" :key="index" class="Small">
@@ -101,6 +102,11 @@
                                     <td >{{ vuelta.destinoD }}</td>
                                     <td >{{ vuelta.llegaD }}</td>
                                     <td >{{ vuelta.observacionesD }}</td>
+                                    <td class="col-1">
+                                        <i class="material-icons cursor-hand"
+                                            @click="ordenar(vuelta)">edit_note
+                                        </i>
+                                    </td>
                                 </tr>
                                 <tr v-if="vuelta.viewDetail" class=" custom-orange">
                                     <td>Detalle:</td>
@@ -226,6 +232,15 @@ export default defineComponent({
             } catch (error) {
                 handleRequestError(error as AxiosError);
             }
+        },
+        ordenar(vuelta:TrenesDescubiertos){
+            localStorage.setItem('fromRoute', this.$route.fullPath); // Guardar la ruta actual en localStorage
+            this.$router.push({
+                path: '/newOrdenamiento',
+                query: {
+                    data: JSON.stringify(vuelta) // Convierte el objeto a un string JSON
+                }
+            });
         },
         resaltarFila(vuelta:TrenesDescubiertos) {
             vuelta.resaltar = !vuelta.resaltar
