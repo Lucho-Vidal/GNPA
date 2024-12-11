@@ -110,11 +110,16 @@
                         <td class="w-10">{{ ind.vueltas[0].refer }}</td>
                         <td class="w-10">{{ ind.turno }}</td>
                         <td class="w-10">{{ ind.circular }}</td>
-                        <td class="w-10">
-                            {{ ind.vueltas[0].observaciones }}
-                        </td>
+                        <td class="w-10">{{ ind.vueltas[0].observaciones }}</td>
                         <td colspan="2" class="w-10">
-                            {{ ind.especialidad+ ': ' +  ind.personal }}
+                            <span
+                                :class="{
+                                    resaltado: ind.personal === 'Sin Cubrir' || ind.personal === 'Diagrama Cancelado',
+                                    'resaltado-verde': ind.personal.includes('Ordenado')
+                                }"
+                            >
+                                {{ ind.especialidad+ ': ' +  ind.personal }}
+                            </span>
                         </td>
                         <td class="w-10">{{ ind.toma }}</td>
                         <td class="w-10">{{ ind.deja }}</td>
@@ -127,7 +132,10 @@
                 class="row"
             >
                 <h4 class="Personal col-1">{{ t.turno }}</h4>
-                <h4 class="col-4">{{ t.personal }}</h4>
+                <h4 class="col-4" :class="{
+                                    resaltado: t.personal === 'Sin Cubrir' || t.personal === 'Diagrama Cancelado',
+                                    'resaltado-verde': t.personal.includes('Ordenado')
+                                }">{{ t.personal }}</h4>
                 <h5 class="col-2">{{ "<<" + t.circular + ">>" }}</h5>
                 <h5 class="col-2">Toma: {{ t.toma }}</h5>
                 <h5 class="col-2">Deja: {{ t.deja }}</h5>
@@ -156,9 +164,7 @@
                             <td class="col-1">{{ vuelta.sale }}</td>
                             <td class="col-1">{{ vuelta.destino }}</td>
                             <td class="col-1">{{ vuelta.llega }}</td>
-                            <td class="col-3">
-                                {{ vuelta.observaciones }}
-                            </td>
+                            <td class="col-3">{{ vuelta.observaciones }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -169,17 +175,16 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { AxiosError } from "axios";
-import { ITurno } from "../../interfaces/ITurno";
-import { getTurnos } from "../../services/turnosService";
+import { ITurno } from '../../interfaces/ITurno';
 import { Itinerario } from "../../interfaces/Itinerario";
 import { IPersonal } from "../../interfaces/IPersonal";
 import { Novedad } from "../../interfaces/INovedades";
 import { newToken } from "../../services/signService";
 import { CambioTurno } from '../../interfaces/ICambioTurno';
-import { handleRequestError, loadItinerario, loadCambiosTurnos, loadPersonales, loadNovedades } from '../../utils/funciones';
+import { loadItinerario, loadCambiosTurnos, loadPersonales, loadNovedades, loadOrdenamientos, loadTurnos } from '../../utils/funciones';
 import { filtrarPorTurno, filtroItinerario, filtroTrenes, obtenerTiposCirculares } from "../../utils/turnos";
 import { buscarPersonalACargo } from "../../utils/personal";
+import { Ordenamiento } from "../../interfaces/IOrdenamientos";
 
 export default defineComponent({
     data() {
@@ -187,15 +192,21 @@ export default defineComponent({
             tren: "" as string,
             searchType: 'tren',
             isSearchByTurno: false,
+            
             lstTurnos: [] as ITurno[],
-            circulares: [] as string[],
-            circularSeleccionada: ["Dic23"] as string[],
-            turnosAImprimir: [] as ITurno[] | null,
-            itinerario: [] as Itinerario[],
-            horarios: {} as Itinerario | null,
             personales: [] as IPersonal[],
-            today: new Date(),
+            itinerario: [] as Itinerario[],
             novedades: [] as Novedad[],
+            cambiosTurnos: [] as  CambioTurno[],
+            ordenamientos: [] as Ordenamiento[],
+
+            circulares: [] as string[],
+            circularSeleccionada: [] as string[],
+            
+            turnosAImprimir: [] as ITurno[] ,
+            horarios: {} as Itinerario | null,
+            
+            today: new Date(),
             inputDate: "" as string,
             inputIt: "" as string,
             days: [
@@ -207,33 +218,15 @@ export default defineComponent({
                 "Viernes",
                 "Sábado",
             ],
-            cambiosTurnos: [] as  CambioTurno[],
         };
     },
     methods: {
-        async loadTurnos() {
-            /* Trae todos los elementos de la base de datos  */
-            try {
-                const res = await getTurnos();
-                this.lstTurnos = res.data;
-                const circularSeleccionadaString = window.localStorage.getItem(
-                    "circularSeleccionada"
-                );
-                this.circularSeleccionada = circularSeleccionadaString
-                    ? circularSeleccionadaString.split(",")
-                    : [];
-                this.circulares = obtenerTiposCirculares(this.lstTurnos);
-            } catch (error) {
-                handleRequestError(error as AxiosError);
-            }
-        },
-
         buscar() {
             /* Ejecuta en cada búsqueda todos los métodos necesarios. 
             Se ejecuta por v-on:change en el input  */
             //limpio variables globales
             this.horarios = null;
-            this.turnosAImprimir = null;
+            this.turnosAImprimir = [];
 
             const fecha: Date = this.obtenerFecha(this.inputDate, this.today);
             const itinerario: string = this.itinerarioType(fecha);
@@ -286,6 +279,28 @@ export default defineComponent({
                     this.novedades,
                     this.cambiosTurnos
                 );
+                //Aca si hay una cancelacion de diagrama vamos a cambiarle el nombre por "Sin Cubrir"
+                const ordenamientos = this.ordenamientos.filter((orden:Ordenamiento)=>{                
+                    return orden.fecha.split(",")[0] === new Date(this.inputDate+"T12:00").toLocaleDateString();
+                });                
+
+                ordenamientos.forEach(orden=>{                    
+                    this.turnosAImprimir.forEach((turno:ITurno)=>{
+                        if(turno.turno === orden.turnoEfectivo && orden.tipo === "cancelacionDiagrama") {
+                            turno.personal = "Diagrama Cancelado"
+                        }                        
+                    });
+                    if( 
+                        (orden.turno.vueltas.some(vuelta => {
+                            return vuelta.tren.toLowerCase().includes(this.tren.toLowerCase())
+                        }) ||
+                        orden.turnoEfectivo.toLowerCase().includes(this.tren.toLowerCase())) && 
+                        orden.tipo === "ordenamiento"
+                    ){
+                        orden.turno.personal = `Ordenado: ${orden.personal.apellido}, ${orden.personal.nombres}`
+                        this.turnosAImprimir.push(orden.turno) 
+                    }
+                })
             }
         },
         obtenerFecha(fecha: string, today: Date) {
@@ -329,11 +344,16 @@ export default defineComponent({
     },
     async mounted() {
         try {
-            this.loadTurnos();
+            const circularSeleccionadaString = window.localStorage.getItem("circularSeleccionada");
+            this.circularSeleccionada = circularSeleccionadaString ? circularSeleccionadaString.split(",") : [];
+
+            this.lstTurnos = await loadTurnos() || [];
+            this.circulares = obtenerTiposCirculares(this.lstTurnos);
             this.itinerario = await loadItinerario() || [];
             this.cambiosTurnos = await loadCambiosTurnos() || [];
             this.personales = await loadPersonales() || [];
             this.novedades = await loadNovedades() || [];
+            this.ordenamientos = await loadOrdenamientos() || [];
             this.today.setHours(12, 0, 0, 0);
             newToken();
         } catch (error) {
@@ -361,5 +381,20 @@ body {
     flex-wrap: nowrap;
     justify-content: space-around;
     border-radius: 0.5rem;
+}
+.resaltado {
+  background-color: red;
+  color: white;
+  margin-inline: 10px;
+  padding: 5px; /* Opcional para agregar espaciado */
+  border-radius: 4px; /* Opcional para bordes redondeados */
+}
+.resaltado-verde {
+    background-color: lightgreen; /* Fondo verde claro */
+    color: black;    
+    margin-inline: 10px;
+    padding: 5px; /* Opcional para agregar espaciado */
+    border-radius: 4px; /* Opcional para bordes redondeados */  
+    font-weight: bold;
 }
 </style>
