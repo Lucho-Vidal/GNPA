@@ -227,6 +227,24 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
+        path: "/addItinerario",
+        name: "addItinerario",
+        meta: { title: "GNPA - Nuevos turnos" },
+        component: () => import("@/components/turnos/addItinerario.vue"),
+        beforeEnter: (to, from, next) => {
+            requireAuth(to, from, () => requireAdmin(next));
+        },
+    },
+    {
+        path: "/itinerariosTrenes",
+        name: "itinerario",
+        meta: { title: "GNPA - Itinerarios de trenes" },
+        component: () => import("@/components/turnos/Itinerarios.vue"),
+        beforeEnter: (to, from, next) => {
+            requireAuth(to, from, () => requireAdmin(next));
+        },
+    },
+    {
         path: "/editTurno/:id",
         name: "editTurno",
         meta: { title: "GNPA - Editar turno" },

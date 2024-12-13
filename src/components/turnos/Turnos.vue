@@ -6,10 +6,11 @@
             </h2>
             <div class="d-flex justify-content-end">
                 <router-link
-                    class="btn btn-primary d-flex end mx-3"
+                    class="btn btn-primary d-flex end"
                     to="/newTurno"
                     >Nuevo Turno</router-link
                 >
+                <router-link class="btn btn-secondary d-flex end mx-3" to='/itinerariosTrenes'>Itinerario de trenes</router-link>
                 <router-link class="btn btn-success d-flex end" to="/addturnos"
                     >Cargar desde Excel</router-link
                 >

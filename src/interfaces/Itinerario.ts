@@ -1,10 +1,13 @@
 
 export interface Itinerario {
-    id: null;
-    tren: number;
+    _id: string;
+    tren: string;
+    circular: string;
     itinerario: string;
     estaciones: string[];
     horarios: string[];
+    horarioXEst:Record<string,string>
+    viewDetail:boolean;
     /* PC: string;
     ALL: string;
     RE: string;

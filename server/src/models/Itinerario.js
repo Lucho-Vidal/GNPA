@@ -1,19 +1,15 @@
 import { Schema, model } from "mongoose";
 
 const itinerarioSchema = new Schema({
-    TREN: {
-        type: Number,
+    tren: {
+        type: String,
         required: true,
-        trim: true,
     },
+    circular:String,
     itinerario: String,
     estaciones:[],
     horarios:[],
-
-},
-    {
-        versionKey: false,
-    }
-);
+    horarioXEst:{},
+});
 
 export default model("Itinerario", itinerarioSchema);

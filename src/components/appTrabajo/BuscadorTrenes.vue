@@ -181,7 +181,7 @@ import { IPersonal } from "../../interfaces/IPersonal";
 import { Novedad } from "../../interfaces/INovedades";
 import { newToken } from "../../services/signService";
 import { CambioTurno } from '../../interfaces/ICambioTurno';
-import { loadItinerario, loadCambiosTurnos, loadPersonales, loadNovedades, loadOrdenamientos, loadTurnos } from '../../utils/funciones';
+import { loadItinerarios, loadCambiosTurnos, loadPersonales, loadNovedades, loadOrdenamientos, loadTurnos } from '../../utils/funciones';
 import { filtrarPorTurno, filtroItinerario, filtroTrenes, obtenerTiposCirculares } from "../../utils/turnos";
 import { buscarPersonalACargo } from "../../utils/personal";
 import { Ordenamiento } from "../../interfaces/IOrdenamientos";
@@ -349,7 +349,7 @@ export default defineComponent({
 
             this.lstTurnos = await loadTurnos() || [];
             this.circulares = obtenerTiposCirculares(this.lstTurnos);
-            this.itinerario = await loadItinerario() || [];
+            this.itinerario = await loadItinerarios() || [];
             this.cambiosTurnos = await loadCambiosTurnos() || [];
             this.personales = await loadPersonales() || [];
             this.novedades = await loadNovedades() || [];

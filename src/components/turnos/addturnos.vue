@@ -441,13 +441,8 @@ export default defineComponent({
             }
         },
         viewDetail(turno: ITurno) {
-            if (turno.viewDetail) {
-                turno.viewDetail = false;
-            } else {
-                turno.viewDetail = true;
-            }
+                turno.viewDetail = !turno.viewDetail;
         },
-
         filtrar() {
             this.Filtradas = this.turnos.filter((t) => {
                 return (
