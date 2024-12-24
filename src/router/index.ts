@@ -162,6 +162,25 @@ const routes: RouteRecordRaw[] = [
         },
     },
     {
+        path: "/ciclo",
+        name: "personalCiclo",
+        props: true,
+        meta: { title: "GNPA - Personal Ciclo" },
+        component: () => import("@/components/personal/ciclo.vue"),
+        beforeEnter: (to, from, next) => {
+            requireAuth(to, from, () => requireModerator(next));
+        },
+    },{
+        path: "/addCiclo",
+        name: "addPersonalCiclo",
+        props: true,
+        meta: { title: "GNPA - agregar personal ciclo" },
+        component: () => import("@/components/personal/addCiclo.vue"),
+        beforeEnter: (to, from, next) => {
+            requireAuth(to, from, () => requireModerator(next));
+        },
+    },
+    {
         path: "/personalSinDiagrama",
         name: "personalSinDiagrama",
         props: true,
