@@ -9,7 +9,7 @@ import { getItinerarios } from "@/services/itinerarioService";
 import { getNovedades } from "@/services/novedadesService";
 import { getOrdenamientos } from "@/services/ordenamientoService";
 import { getPersonal, getPersonales } from "@/services/personalService";
-import { getPersonalSinDiagrama } from "@/services/personalSinDiagramaService";
+import { getPersonalesSinDiagrama, getPersonalSinDiagrama } from "@/services/personalSinDiagramaService";
 import { createRegistro } from "@/services/registrosService";
 import { getTarjetaPersonalSinDiagrama, getTarjetaPersonalSinDiagramaPorLegajoYMes } from "@/services/tarjetaPersonalSinDiagramaService";
 import { getTurnos } from "@/services/turnosService";
@@ -84,6 +84,15 @@ export async function loadPersonal(id: string) {
         console.error(error);
     }
 }
+//----------- Personal sin diagrama -----------------
+export async function loadPersonalesSinDiagrama() {
+    try {
+        const res = await getPersonalesSinDiagrama();
+        return res.data;
+    } catch (error) {
+        console.error(error);
+    }
+}
 export async function loadPersonalSinDiagrama(id: string) {
     try {
         const res = await getPersonalSinDiagrama(id);
@@ -92,6 +101,8 @@ export async function loadPersonalSinDiagrama(id: string) {
         console.error(error);
     }
 }
+
+//----------- Tarjetas de Personal sin diagrama -----------------
 export async function loadTarjetaPersonalSinDiagrama(id: string) {
     try {
         const res = await getTarjetaPersonalSinDiagrama(id);
