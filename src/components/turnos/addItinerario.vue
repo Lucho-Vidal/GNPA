@@ -179,11 +179,11 @@ export default defineComponent({
                     accion: "Agrego lista de itinerario"+ this.circular,
                 };
                 await createRegistro(registro);
-                alert("Se cargaron los turnos satisfactoriamente.")
+                alert("Se cargaron los trenes satisfactoriamente.")
 
                 this.$router.push("/itinerariosTrenes");
             } catch (error) {
-                console.error('Error al crear turnos:', error);
+                console.error('Error al crear trenes:', error);
             }
         },
         async deleteTurno(index: number) {
@@ -270,7 +270,7 @@ export default defineComponent({
 
             if(sheetName.toLowerCase().includes('asc')&&sheetName.toLowerCase().includes('ty')){
                 estaciones = ['PC','ALL','K5','RE','TY','BO','GW','AK','CY','FV','BQ','GT','LLV','MG','ZZ']
-                rows = [4,6,8,11,14,16,18,20,23,25,27,31,33,35]
+                rows = [4,6,8,11,14,16,18,20,23,25,27,29,31,33,35]
             }else if(sheetName.toLowerCase().includes('des')&&sheetName.toLowerCase().includes('ty')){
                 estaciones = ['PC','ALL','RE','K5','TY','BO','GW','AK','CY','FV','BQ','GT','LLV','MG','ZZ'].reverse()
                 rows = [4,6,8,10,12,14,16,19,21,23,25,28,31,33,35]
@@ -283,7 +283,7 @@ export default defineComponent({
             }
             else if(sheetName.toLowerCase().includes('asc')&&sheetName.toLowerCase().includes('hdo')){
                 estaciones = ['RE','TY','K34','SJ','HDO']
-                rows = [3,4,9,14,16]                
+                rows = [3,6,11,16,18]                
             }else if(sheetName.toLowerCase().includes('des')&&sheetName.toLowerCase().includes('hdo')){
                 estaciones = ['RE','TY','K34','SJ','HDO'].reverse()
                 rows = [3,5,10,15,18]                
