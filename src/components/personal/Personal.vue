@@ -9,19 +9,10 @@
                 {{ today.toLocaleDateString() }}
             </p> -->
             <div class="d-flex justify-content-end">
-                <router-link
-                    class="btn btn-primary d-flex end"
-                    to="/editPersonal"
-                    >Nuevo Personal</router-link
-                >
-                <router-link
-                    class="btn btn-success d-flex end mx-3"
-                    to="/addPersonales"
-                    >Cargar desde Excel</router-link
-                >
-                <button class="btn btn-warning" @click.prevent="abrirModal()">
-                    Filtrar Personal
-                </button>
+                <router-link class="btn btn-primary d-flex end" to="/editPersonal" >Nuevo Personal</router-link>
+                <router-link class="btn btn-success d-flex end mx-3" to="/addPersonales" >Cargar desde Excel</router-link>
+                <router-link class="btn btn-secondary d-flex end " to='/ciclo'>Servicio ciclo</router-link>
+                <button class="btn btn-warning mx-3" @click.prevent="abrirModal()">Filtrar Personal</button>
             </div>
             <div class="modal" :class="{ 'd-block': mostrarModalDetalle }" v-if="detalleLegajo!=0" @click.self="cerrarModal">
                 <div class="modal-dialog">
