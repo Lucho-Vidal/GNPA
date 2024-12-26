@@ -327,6 +327,7 @@
                             <input
                                 type="text"
                                 class="form-control"
+                                @change="cargarEstaciones(tren.tren,index)"
                                 name="tren"
                                 v-model="tren.tren"
                             />
@@ -335,10 +336,15 @@
                             <select
                                 name="dotacion"
                                 id="dotacion"
+                                @change="cargarHorario(tren.tren,tren.origen,index,true)"
                                 class="form-control"
                                 v-model="tren.origen"
                                 >
-                                    <option v-for="(dotacion, index) in dotacionesPermitidas" :key="index" :value="dotacion">
+                                    <option 
+                                        v-for="(dotacion, i) in estacionesDelTren[index]" 
+                                        :key="i" 
+                                        :value="dotacion"
+                                        >
                                         {{ dotacion }}
                                     </option>
                             </select>
@@ -355,10 +361,11 @@
                             <select
                                 name="dotacion"
                                 id="dotacion"
+                                @change="cargarHorario(tren.tren,tren.destino,index,false)"
                                 class="form-control"
                                 v-model="tren.destino"
                                 >
-                                    <option v-for="(dotacion, index) in dotacionesPermitidas" :key="index" :value="dotacion">
+                                    <option v-for="(dotacion, i) in estacionesDelTren[index]" :key="i" :value="dotacion">
                                         {{ dotacion }}
                                     </option>
                             </select>
@@ -410,7 +417,7 @@ import { Itinerario } from "../../interfaces/Itinerario";
 import { ITurno, TrenesDescubiertos } from '../../interfaces/ITurno';
 import { createOrdenamiento } from '../../services/ordenamientoService';
 import { newToken } from "../../services/signService";
-import { guardarRegistro, loadOrdenamientos, loadPersonales, loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from '../../utils/funciones';
+import { guardarRegistro, loadItinerarios, loadOrdenamientos, loadPersonales, loadTarjetaPersonalSinDiagramaPorLegajoYMes, loadTurnos } from '../../utils/funciones';
 import { dia_laboral } from "../../utils/personal";
 import { itinerarioType, obtenerNumeroDia } from "../../utils/fechas";
 import { defaultOrdenamiento, defaultTarjetaPersonalSinDiagrama, defaultTurnos } from "../../utils/interfacesDefault";
@@ -431,9 +438,11 @@ export default defineComponent({
             dotacionesPermitidas: [
                 'PC','ALL','K5','KM5','RE','TY','BO','GW','AK','LLV','MG','ZZ','CÑ','MN','LB','QL','BZ','VE','OA','LP','CY','FV','BQ','JG'
             ] as string[],
+            estacionesDelTren:[] as Array<string[]>,
             ordenamiento: defaultOrdenamiento() as Ordenamiento,
             ordenamientos: [] as Ordenamiento[],
             itinerario: [] as Itinerario[],
+            itIndex: {} as Record<string,Itinerario>,
             days: [
                 "Domingo",
                 "Lunes",
@@ -487,6 +496,23 @@ export default defineComponent({
             } catch (error) {
                 this.handleRequestError(error as AxiosError);
             }
+        },
+        itinerarioIndexado(itinerarios: Itinerario[]):Record<string, Itinerario> {
+            return itinerarios.reduce(
+                (acumulador: Record<string, Itinerario>, itinerario: Itinerario) => {
+                    acumulador[itinerario.tren] = itinerario;
+                    return acumulador;
+                },
+                {} as Record<string, Itinerario>
+            );
+        },
+        cargarEstaciones(tren:string,index:number){
+            this.estacionesDelTren[index] = this.itIndex[tren].estaciones
+        },
+        cargarHorario(tren:string, estacion:string,index:number,esSale:boolean){
+            esSale ?
+            this.ordenamiento.turno.vueltas[index].sale = this.itIndex[tren].horarioXEst[estacion]:
+            this.ordenamiento.turno.vueltas[index].llega = this.itIndex[tren].horarioXEst[estacion];
         },
         handleRequestError(error: AxiosError) {
             console.error("Error en la solicitud:", error);
@@ -708,7 +734,9 @@ export default defineComponent({
         try {
             this.personales = await loadPersonales() || [];
             this.turnos = await loadTurnos() || [];
+            this.itinerario = await loadItinerarios() || [];
             this.ordenamientos = await loadOrdenamientos() || [];
+            this.itIndex = this.itinerarioIndexado(this.itinerario)
             
             newToken();
         } catch (error) {
