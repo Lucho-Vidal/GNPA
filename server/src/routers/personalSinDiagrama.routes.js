@@ -22,4 +22,14 @@ router.delete(
     [authJwt.verifyToken, authJwt.isModerator],
     personalSinDiagramaCtrl.deletePersonalSinDiagramaById
 );
+router.post(
+    "/PersonalSinDiagrama-multiple",
+    [authJwt.verifyToken, authJwt.isModerator],
+    personalSinDiagramaCtrl.createMultiplePersonalSinDiagrama
+);
+router.delete(
+    "/PersonalSinDiagrama-multiple",
+    [authJwt.verifyToken, authJwt.isModerator],
+    personalSinDiagramaCtrl.deleteMultiplePersonalSinDiagrama
+);
 export default router;

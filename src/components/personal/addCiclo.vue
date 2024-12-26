@@ -37,7 +37,7 @@
     <div class="container-fluid px-4" v-if="lstCiclo.length > 0">
         <h2 class="d-flex justify-content-center m-3">Cargar turnos</h2>
         <div class="d-flex justify-content-end">
-            <!-- <button class="btn btn-primary d-flex end mx-3" @click="enviarTurnos()">Guardar turnos</button> -->
+            <button class="btn btn-primary d-flex end mx-3" @click="enviarCiclos()">Guardar turnos</button>
             <router-link class="btn btn-danger d-flex end" to="/itinerariosTrenes">Cancelar</router-link>
         </div>
 
@@ -47,9 +47,9 @@
                 <th class="col-1">N°</th>
                 <th class="col-1">Ciclo</th>
                 <th class="col-1">Legajo</th>
-                <th class="col-1">Franco Inicio</th>
+                <th class="col-1">Franco inicio</th>
                 <th class="col-1">hora</th>
-                <th class="col-1">Franco Inicio</th>
+                <th class="col-1">Franco fin</th>
                 <th class="col-1">hora</th>
                 <th class="col-1">Borrar</th>
                 </tr>
@@ -101,11 +101,10 @@ import { defineComponent } from "vue";
 import * as XLSX from 'xlsx';
 import { newToken } from "../../services/signService";
 import { AxiosError } from "axios";
-// import { Itinerario } from '../../interfaces/Itinerario';
-// import { Registro } from "../../interfaces/IRegistro";
-// import { createRegistro } from "../../services/registrosService";
-// import { createMultipleItinerario } from "../../services/itinerarioService";
+import { Registro } from "../../interfaces/IRegistro";
+import { createRegistro } from "../../services/registrosService";
 import { IPersonalSinDiagrama } from "../../interfaces/IPersonalSinDiagrama";
+import { createMultiplePersonalSinDiagrama, deleteMultiplePersonalSinDiagrama } from "../../services/personalSinDiagramaService";
 
 export default defineComponent({
     data() {
@@ -133,38 +132,44 @@ export default defineComponent({
                 this.sheetNames = this.workbook.SheetNames;
             }
         },
-        // async enviarTurnos() {
-        //     try {
-        //         const batchSize = 50;
-        //         const batches = [];
+        async enviarCiclos() {
+            try {
+                const confirmacion = window.confirm(
+                    "¿Desea eliminar los ciclos anteriores? esta acción eliminara los ciclo ya cargados y cargara los nuevos. Esto recomendable en caso de que ya no estén vigente."
+                );
+                if (confirmacion) {
+                    await deleteMultiplePersonalSinDiagrama();
+                }
+                const batchSize = 50;
+                const batches = [];
 
-        //         for (let i = 0; i < this.lstItinerariosTrenes.length; i += batchSize) {
-        //             const batch = this.lstItinerariosTrenes.slice(i, i + batchSize);
-        //             batches.push(batch);
-        //         }
-        //         for (const batch of batches) {
-        //             console.log("Enviando lote de tamaño: ", batch.length);                        
-        //             await createMultipleItinerario(batch);
-        //         }
+                for (let i = 0; i < this.lstCiclo.length; i += batchSize) {
+                    const batch = this.lstCiclo.slice(i, i + batchSize);
+                    batches.push(batch);
+                }
+                for (const batch of batches) {
+                    console.log("Enviando lote de tamaño: ", batch.length);                        
+                    await createMultiplePersonalSinDiagrama(batch);
+                }
                 
-        //         // guardamos registro
-        //         const registro: Registro = {
-        //             usuario: window.localStorage.getItem("username") || "",
-        //             fecha: this.today.toString(),
-        //             accion: "Agrego lista de itinerario"+ this.circular,
-        //         };
-        //         await createRegistro(registro);
-        //         alert("Se cargaron los trenes satisfactoriamente.")
+                // guardamos registro
+                const registro: Registro = {
+                    usuario: window.localStorage.getItem("username") || "",
+                    fecha: this.today.toString(),
+                    accion: "Agrego lista de ciclos",
+                };
+                await createRegistro(registro);
+                alert("Se cargaron los ciclos satisfactoriamente.")
 
-        //         this.$router.push("/itinerariosTrenes");
-        //     } catch (error) {
-        //         console.error('Error al crear trenes:', error);
-        //     }
-        // },
+                this.$router.push("/ciclo");
+            } catch (error) {
+                console.error('Error al crear trenes:', error);
+            }
+        },
         async deleteTurno(index: number) {
             try {
                 const confirmacion = window.confirm(
-                    "¿Estás seguro de que deseas eliminar este turno?"
+                    "¿Estás seguro de que deseas eliminar este ciclo?"
                 );
                 if (confirmacion) {
                     // await deleteTurno(id);
@@ -175,8 +180,37 @@ export default defineComponent({
                 this.handleRequestError(error as AxiosError);
             }
         },
-        ConvertirJson()  {
-            const sheet = this.workbook!.Sheets[this.sheetNameSeleccionado];
+        // Función para convertir los días de la semana a números
+        convertirFranco(dia: string | undefined): number | null {
+            if (!dia) return null;
+
+            const diasMap: { [key: string]: number } = {
+                "DOMINGO": 0,
+                "LUNES": 1,
+                "MARTES": 2,
+                "MIERCOLES": 3,
+                "JUEVES": 4,
+                "VIERNES": 5,
+                "SABADO": 6,
+            };
+
+            const diaNormalizado = dia.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase();
+            return diasMap[diaNormalizado] ?? null;
+        },
+        normalizarHora(hora: string | undefined): string | null {
+            if (!hora) return null;
+
+            if (!isNaN(Number(hora))) {
+                const totalMinutes = Math.round(Number(hora) * 24 * 60);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+            }
+
+            return hora.replace(/\s*hs$/i, "").replace(/\s*h[sS]?$/i, "").trim();
+        },
+        ConvertirJson(){
+            const sheet = this.workbook?.Sheets[this.sheetNameSeleccionado];
 
             if (!sheet) {
                 console.error(`La hoja ${this.sheetNameSeleccionado} no se pudo leer correctamente.`);
@@ -184,66 +218,41 @@ export default defineComponent({
                 return;
             }
 
-            const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Leer hoja como un array de arrays
+            const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            if (!rows || rows.length === 0) {
+            if (!rows || rows.length <= 1) {
                 console.error("La hoja está vacía o no tiene datos válidos.");
                 return;
             }
 
-            // const data: Array<{ ciclo: number; francoInicio: number; horaInicio: string; francoHasta: number; horaHasta: string; legajo: number }> = [];
-            const data: Array<IPersonalSinDiagrama> = [];
-
-            rows.forEach((row, index) => {
-                if (index === 0) return; // Saltar el encabezado
-
+            this.lstCiclo = rows.slice(1).reduce((data: Array<IPersonalSinDiagrama>, row, index) => {
                 const cicloRaw = row[0];
-                const francoInicio = row[1]?.toString().toUpperCase();
+                const francoInicio = row[1]?.toString().trim().toUpperCase();
                 const horaInicioRaw = row[2]?.toString();
-                const francoHasta = row[3]?.toString().toUpperCase();
+                const francoHasta = row[3]?.toString().trim().toUpperCase();
                 const horaHastaRaw = row[4]?.toString();
                 const legajo = row[5]?.toString().trim();
 
-                // Normalizar ciclo
                 const ciclo = !isNaN(Number(cicloRaw)) ? parseInt(cicloRaw, 10) : null;
-                if (ciclo === null) return; // Saltar filas donde ciclo no es un número válido
+                if (ciclo === null) {
+                    console.warn(`Fila ${index + 2} ignorada: 'ciclo' inválido.`, row);
+                    return data;
+                }
 
-                // Validar legajo
-                if (!legajo || !/^[0-9]+$/.test(legajo)) return;
+                if (!legajo || !/^[0-9]+$/.test(legajo)) {
+                    console.warn(`Fila ${index + 2} ignorada: 'legajo' inválido.`, row);
+                    return data;
+                }
 
-                const convertirFranco = (dia: string | undefined): number | null => {
-                    switch (dia?.normalize("NFD").replace(/\p{Diacritic}/gu, "")) {
-                        case "DOMINGO": return 0;
-                        case "LUNES": return 1;
-                        case "MARTES": return 2;
-                        case "MIERCOLES": return 3;
-                        case "JUEVES": return 4;
-                        case "VIERNES": return 5;
-                        case "SABADO": return 6;
-                        default: return null; // Retornar null si no coincide con ningún día válido
-                    }
-                };
+                const francoInicioNum = this.convertirFranco(francoInicio);
+                const francoHastaNum = this.convertirFranco(francoHasta);
+                const horaInicio = this.normalizarHora(horaInicioRaw);
+                const horaHasta = this.normalizarHora(horaHastaRaw);
 
-                const normalizarHora = (hora: string | undefined): string | null => {
-                    if (!hora) return null;
-
-                    // Convertir formato de hora Excel (número decimal) a string "HH:mm"
-                    if (!isNaN(Number(hora))) {
-                        const totalMinutes = Math.round(Number(hora) * 24 * 60);
-                        const hours = Math.floor(totalMinutes / 60);
-                        const minutes = totalMinutes % 60;
-                        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                    }
-
-                    return hora.replace(/\s*hs$/i, "").replace(/\s*h[sS]?$/i, "").trim();
-                };
-
-                const francoInicioNum = convertirFranco(francoInicio);
-                const francoHastaNum = convertirFranco(francoHasta);
-                const horaInicio = normalizarHora(horaInicioRaw);
-                const horaHasta = normalizarHora(horaHastaRaw);
-
-                if (francoInicioNum === null || francoHastaNum === null || !horaInicio || !horaHasta) return; // Saltar filas con datos inválidos
+                if (francoInicioNum === null || francoHastaNum === null || !horaInicio || !horaHasta) {
+                    console.warn(`Fila ${index + 2} ignorada: datos de 'francos' o 'horas' inválidos.`, row);
+                    return data;
+                }
 
                 data.push({
                     _id:'',
@@ -252,15 +261,14 @@ export default defineComponent({
                     HoraInicio: horaInicio,
                     francoHasta: francoHastaNum,
                     HoraHasta: horaHasta,
-                    legajo: parseInt(legajo, 10)
+                    legajo: parseInt(legajo, 10),
                 });
-            });
 
-
-            console.log(data);
-            this.lstCiclo = data
+                // this.lstCiclo = data
+                return data;
+            }, []);
         },
-
+        
         handleRequestError(error: AxiosError) {
             console.error("Error en la solicitud:", error);
 

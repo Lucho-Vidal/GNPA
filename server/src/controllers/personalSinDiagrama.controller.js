@@ -95,3 +95,62 @@ export const deletePersonalSinDiagramaById = async (req, res) => {
         res.status(500).json({ error: "Error interno del servidor" });
     }
 };
+export const createMultiplePersonalSinDiagrama = async (req, res) => {
+    try {
+        // Extraer la lista de personales del cuerpo de la solicitud
+        const personales = req.body;
+
+        if (!Array.isArray(personales) || personales.length === 0) {
+            return res.status(400).json({ message: 'La solicitud debe contener un array de registros de personal.' });
+        }
+
+        // Validar que todos los campos requeridos estén presentes en cada objeto de personal
+        for (const personal of personales) {
+            const {
+                legajo,
+            } = personal;
+
+            if (!legajo ) {
+                return res.status(400).json({ message: 'el legajo es obligatorio en el registro de personalCiclo.' });
+            }
+        }
+        
+        // Crear nuevos objetos Personal con los datos proporcionados
+        // const newPersonalList = personales.map(personal => {
+        //     new Personal(personal);
+        // });
+        const newPersonalList = personales.map(personal => {
+            return {
+                ...personal,
+                _id: new mongoose.Types.ObjectId()
+            };
+        });
+
+        // Guardar los nuevos objetos Personal en la base de datos
+        const savedPersonalList = await Personal.insertMany(newPersonalList);
+
+        // Responder con código de estado 201 y los nuevos recursos creados
+        res.status(201).json(savedPersonalList);
+    } catch (error) {
+        // Manejar cualquier error que pueda ocurrir durante la creación
+        console.error("Error al crear nuevos registros de Personal:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+};
+
+export const deleteMultiplePersonalSinDiagrama = async (req, res) => {
+    try {
+        // Eliminar todos los registros actuales de la base de datos
+        const result = await Personal.deleteMany({});
+        
+        // Verificar cuántos registros fueron eliminados
+        console.log(`Registros eliminados: ${result.deletedCount}`);
+        
+        // Responder con código de estado 204 (Sin contenido)
+        res.status(204).end();
+    } catch (error) {
+        // Manejar cualquier error que pueda ocurrir durante la eliminación
+        console.error("Error al eliminar registros de Personal:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+};

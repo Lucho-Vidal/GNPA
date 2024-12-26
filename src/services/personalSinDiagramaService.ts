@@ -24,3 +24,16 @@ export const updatePersonalSinDiagrama = async (legajo: number,newPersonal: IPer
 
 export const deletePersonalSinDiagrama = async (id: string): Promise<AxiosResponse> =>
     await axios.delete(`/PersonalSinDiagrama/${id}`);
+
+export const createMultiplePersonalSinDiagrama = async (
+    personales: IPersonalSinDiagrama[]
+): Promise<AxiosResponse> => {
+    console.log(
+        `Tamaño del payload: ${JSON.stringify(personales).length} bytes`
+    );
+    const res = await axios.post("/PersonalSinDiagrama-multiple", personales);
+    return res;
+};
+
+export const deleteMultiplePersonalSinDiagrama = async (): Promise<AxiosResponse> =>
+    await axios.delete("/PersonalSinDiagrama-multiple");
