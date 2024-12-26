@@ -195,7 +195,7 @@ export default defineComponent({
                 );
 
                 const confirmacion = window.confirm(
-                    "¿Desea eliminar los personales anteriores? esta acción eliminara los personales ya cargados y cargara los nuevos"
+                    "¿Desea eliminar los personales anteriores? esta acción eliminara los personales ya cargados y cargara los nuevos. Esto recomendable en caso de que ya no este vigente."
                 );
                 if (confirmacion) {
                     await deleteMultiplePersonal();
