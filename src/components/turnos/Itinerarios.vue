@@ -31,6 +31,9 @@
                 <th class="col-1">Turno</th>
                 <th class="col-1">Itinerario</th>
                 <th class="col-1">Circular</th>
+                <th class="col-1">Rotación</th>
+                <th class="col-1">Tren Siguiente</th>
+                <th class="col-1">Hora Tren Siguiente</th>
                 <th class="col-1"></th>
                 <th class="col-1">Editar</th>
                 <th class="col-1">Borrar</th>
@@ -56,6 +59,15 @@
             <td class="col-1">
                 <input class="form-control" type="text" v-model="tren.circular" />
             </td>
+            <td class="col-1">
+                <input class="form-control" type="text" v-model="tren.rotacion" />
+            </td>
+            <td class="col-1">
+                <input class="form-control" type="text" v-model="tren.trenSiguiente" />
+            </td>
+            <td class="col-1">
+                <input class="form-control" type="text" v-model="tren.trenSiguienteHora" />
+            </td>
             <td></td>
             <td class="col-1">
                 <i class="material-icons cursor-hand verde" @click="editTurno(index)">edit_note</i>
@@ -68,7 +80,7 @@
                 <td class="col-1">
                     <i class="material-icons cursor-hand verde" @click=" addInicio(index) ">add</i>
                 </td>
-                <td colspan="5">
+                <td colspan="7">
                     <div class="d-flex flex-nowrap justify-content-center">
                     <input
                         v-for="(estacion, idx) in tren.estaciones"
@@ -87,7 +99,7 @@
             </tr>
             <tr v-if="tren.viewDetail" class="details-row">
                 <td></td>
-                <td colspan="5">
+                <td colspan="7">
                     <div class="d-flex flex-nowrap justify-content-center">
                     <input
                         v-for="(horario, idx) in tren.horarios"
