@@ -43,7 +43,7 @@
                                 </div>
                                 Trenes sin cubrir
                             </router-link>
-                            <router-link class="nav-link" to="/" disabled>
+                            <router-link class="nav-link" to="/Sabana" disabled>
                                 <div class="sb-nav-link-icon">
                                     <i class="fa-regular fa-rectangle-list"></i>
                                 </div>
