@@ -29,6 +29,9 @@ export const createItinerario = async (req, res) => {
             tren,
             itinerario,
             circular,
+            rotacion,
+            trenSiguiente,
+            trenSiguienteHora,
             estaciones,
             horarios,
             horarioXEst
@@ -43,6 +46,9 @@ export const createItinerario = async (req, res) => {
             tren,
             itinerario,
             circular,
+            rotacion,
+            trenSiguiente,
+            trenSiguienteHora,
             estaciones,
             horarios,
             horarioXEst
