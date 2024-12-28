@@ -1,37 +1,31 @@
 <template>
     <div>
-        <NavBar />
-        <main class="container">
+        <main class="container-fluid">
             <h2 class="d-flex justify-content-center m-3">Sabana de Trenes</h2>
-            <input
-                class="col-3"
-                type="date"
-                v-model="inputDate"
-            />
-            <button class="btn btn-primary mx-3" @dblclick="crearSabana()">Crear sabana</button>
 
-            <div class="d-flex row">
+            <div class="d-flex justify-content-end mx-5">
                 <ul class="nav nav-tabs">
-                    <li class="nav item">
-                        <a
+                    <li class="nav-item">
+                        <button
                             class="nav-link"
                             :class="[currentTab ? '' : 'active']"
-                            href="#"
-                            @click="cambiarPestaña()"
-                            >Sabana descendente</a
+                            @click="cambiarPestaña('ascendente')"
                         >
+                            Sabana descendente
+                        </button>
                     </li>
-                    <li class="nav item">
-                        <a
+                    <li class="nav-item">
+                        <button
                             class="nav-link"
                             :class="[currentTab ? 'active' : '']"
-                            href="#"
-                            @click="cambiarPestaña()"
-                            >Sabana ascendente</a
+                            @click="cambiarPestaña('descendente')"
                         >
+                            Sabana ascendente
+                        </button>
                     </li>
                 </ul>
             </div>
+            <hr>
 
             <table
                 v-if="!currentTab"
@@ -64,7 +58,7 @@
                 <tbody>
                     <tr 
                         class="Small shadow"
-                        v-for="(desc, index) in descendentes"
+                        v-for="(desc, index) in sabanaDes"
                         :key="index"
                     >
                         <td class="col-1">{{ desc.tren }}</td>
@@ -90,10 +84,9 @@
             >
                 <thead>
                     <tr>
-                        <th class="" colspan="1" rowspan="2">Tren</th>
-                        <th class="" colspan="1" rowspan="2">Sale</th>
-                        <th class="" colspan="1" rowspan="2">Origen</th>
-                        <th class="" colspan="1" rowspan="2">Destino</th>
+                        <th class="" colspan="0" rowspan="2">Rotación</th>
+                        <th class="" colspan="1" rowspan="2">Tren  Sale</th>
+                        <th class="" colspan="1" rowspan="2">Origen / Destino</th>
                         <th class="" colspan="2" rowspan="1">Para tren</th>
                         <th class="" colspan="4" rowspan="1">Conductor</th>
                         <th class="" colspan="4" rowspan="1">Guarda</th>
@@ -101,453 +94,249 @@
                     <tr>
                         <th class="" colspan="1" rowspan="1">Hora en</th>
                         <!-- Conductor -->
+                        <th class="" colspan="1" rowspan="1">ref</th>
                         <th class="" colspan="1" rowspan="1">Turno</th>
                         <th class="" colspan="1" rowspan="1">Nombre</th>
                         <th class="" colspan="1" rowspan="1">Llega con</th>
                         <th class="" colspan="1" rowspan="1">Relevo</th>
                         <!-- Guarda -->
+                        <th class="" colspan="1" rowspan="1">ref</th>
                         <th class="" colspan="1" rowspan="1">Turno</th>
                         <th class="" colspan="1" rowspan="1">Nombre</th>
                         <th class="" colspan="1" rowspan="1">Llega con</th>
                         <th class="" colspan="1" rowspan="1">Relevo</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr class="Small shadow">
+                <tbody
+                v-for="(tren, index) in sabanaAsc" :key="index"
+                >
+                    <tr class="Small shadow" 
+                        >
+                        <td class="col-1">{{ tren.rotacion }}</td>
+                        <td class="col-1">{{ tren.tren+' '+ tren.sale }}</td>
+                        <td class="col-1">{{ tren.origen +' => '+ tren.destino }}</td>
+                        <td class="col-1">{{ tren.paraTren +' '+tren.paraTrenHora }}</td>
+                        
+                    </tr>
+                    <tr v-for="(item, i) in obtenerDatosMaximos(tren.turnos)"
+                        :key="i">
                         <td class="col-1"></td>
                         <td class="col-1"></td>
                         <td class="col-1"></td>
                         <td class="col-1"></td>
+                        <td class="col-1">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
+                        <td class="col-1">{{ item.conductor?.turno || '' }}</td>
+                        <td class="col-1">{{ item.conductor?.personal || '' }}</td>
+                        
+                        <td class="col-3">{{ 
+                            (() => {
+                                    const vueltaActual = item.conductor?.vueltas.find(v => v.tren === tren.tren);
+                                    if (vueltaActual?.vuelta && vueltaActual.vuelta > 1) {
+                                        // Busca la vuelta anterior
+                                        const vueltaAnterior = item.conductor?.vueltas.find(v => v.vuelta === vueltaActual.vuelta - 1);
+                                        return vueltaAnterior?.tren ? `${vueltaAnterior?.tren}  ${vueltaAnterior?.llega}` : 'Toma';
+                                    }
+                                    return 'Toma';
+                                })()
+                            }}</td>
                         <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
+                        <td class="col-1">{{ item.guarda?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
+                        <td class="col-1">{{ item.guarda?.turno || '' }}</td>
+                        <td class="col-1">{{ item.guarda?.personal || '' }}</td>
+                        
+                        <td class="col-3">{{ 
+                            (() => {
+                                    const vueltaActual = item.guarda?.vueltas.find(v => v.tren === tren.tren);
+                                    if (vueltaActual?.vuelta && vueltaActual.vuelta > 1) {
+                                        // Busca la vuelta anterior
+                                        const vueltaAnterior = item.guarda?.vueltas.find(v => v.vuelta === vueltaActual.vuelta - 1);
+                                        return vueltaAnterior?.tren ? `${vueltaAnterior?.tren}  ${vueltaAnterior?.llega}` : 'Toma';
+                                    }
+                                    return 'Toma';
+                                })()
+                            }}</td>
                         <td class="col-1"></td>
                     </tr>
                 </tbody>
             </table>
         </main>
-        <footer-page />
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import NavBar from "../NavBar.vue";
-import { getTurnos } from "../../services/turnosService";
 import { ITurno } from "../../interfaces/ITurno";
-import FooterPage from "../FooterPage.vue";
-import { Itinerario } from "../../interfaces/Itinerario";
-import {  getItinerarioPaginado } from "../../services/itinerarioService";
+import { Itinerario } from '../../interfaces/Itinerario';
 import { IPersonal } from "../../interfaces/IPersonal";
-import { getPersonales } from "../../services/personalService";
 import { Novedad } from "../../interfaces/INovedades";
-import { getNovedades } from "../../services/novedadesService";
 import { newToken } from "../../services/signService";
-import { Descendente, Ascendente } from "../../interfaces/ISabana";
+import { SabanaAscendente, SabanaDescendente } from "../../interfaces/ISabana";
+import { esUltimoCaracterPar, loadCambiosTurnos, loadItinerarios, loadNovedades, loadPersonales, loadTurnos } from "../../utils/funciones";
+import { CambioTurno } from "../../interfaces/ICambioTurno";
+import { Ordenamiento } from '../../interfaces/IOrdenamientos';
+import { itinerarioType } from "../../utils/fechas";
+import { filtroTrenes } from "../../utils/turnos";
+import { buscarCancelacionDiagrama, buscarPersonalACargo } from "../../utils/personal";
 
 export default defineComponent({
     data() {
         return {
-            currentTab: false,
-            descendente: {} as Descendente,
-            ascendente: {} as Ascendente,
-            descendentes: [] as Descendente[],
-            ascendentes: [] as Ascendente[],
+            currentTab: true,
+            itinerarioAsc: [] as Itinerario[],
+            itinerarioDes: [] as Itinerario[],
+            sabanaAsc: [] as SabanaAscendente[],
+            sabanaDes: [] as SabanaDescendente[],
 
-            currentPage: 1,
             pageSize: 10, // Tamaño de la página, ajusta según tus necesidades
-            trenes: [] as Descendente[], // Tu lista de trenes
             loading: false, // Indicador de carga
 
-            tren: "" as string,
-            turno: [] as ITurno[],
-            indFiltrado: [] as ITurno[],
-            turnos: [] as Array<ITurno[]>,
-            itinerario: [] as Itinerario[],
-            itFiltrado: [] as Itinerario[],
+            scrollTop: 0,
+            allItems: [], // Todos los datos cargados
+            visibleItems: [], // Elementos que se mostrarán en pantalla
+            itemsPerPage: 20, // Cantidad de elementos a cargar por página
+            currentPage: 1, // Página actual
+
+
+            lstTurnos: [] as ITurno[],
             personales: [] as IPersonal[],
-            today: new Date(),
+            itinerario: [] as Itinerario[],
             novedades: [] as Novedad[],
-            inputDate: "" as string,
-            days: [
-                "Domingo",
-                "Lunes",
-                "Martes",
-                "Miércoles",
-                "Jueves",
-                "Viernes",
-                "Sábado",
-            ],
+            cambiosTurnos: [] as  CambioTurno[],
+            ordenamientos: [] as Ordenamiento[],
+
+            today: new Date(),
         };
     },
     methods: {
-        async loadTurnos() {
-            /* Trae todos los elementos de la base de datos  */
-            const res = await getTurnos();
-            this.turno = res.data;
-        },
-        // async loadItinerario() {
-        //     /* Trae todos los elementos de la base de datos */
-        //     const res = await getItinerario();
-        //     this.itinerario = res.data;
-        // },
-        async loadPersonales() {
-            /* Trae todos los elementos de la base de datos */
-            const res = await getPersonales();
-            this.personales = res.data;
-        },
-        async loadNovedades() {
-            const res = await getNovedades();
-            this.novedades = res.data;
-            
-        },
-        async cargarMasTrenes() {
-            if (this.loading) return;
-
-            this.loading = true;
-
-            try {
-                const nuevosTrenes = await this.obtenerTrenesPaginados(this.currentPage, this.pageSize);
-
-                // Agrega los trenes cargados a la lista existente
-                this.itinerario = [...this.itinerario, ...nuevosTrenes];
-
-                // Incrementa la página actual para la próxima carga
-                this.currentPage++;
-            } catch (error) {
-                console.error('Error al cargar trenes:', error);
-            } finally {
-                this.loading = false;
+        cambiarPestaña(sabana:string) {
+            if(sabana === "ascendente"){
+                this.currentTab = false;
+            }else if(sabana === "descendente"){
+                this.currentTab = true;
             }
         },
-        async obtenerTrenesPaginados(page: number, pageSize: number) {
-            // Lógica para obtener trenes paginados, podría ser una llamada a una API
-            // Ajusta esto según cómo obtienes tus datos
-            const response = await getItinerarioPaginado(page,pageSize)
-            return response.data;
+        obtenerDatosMaximos(turnos: ITurno[]) {
+            const conductores = turnos.filter(turno => turno.especialidad.toLowerCase().includes('cond'));
+            const guardas = turnos.filter(turno => turno.especialidad.toLowerCase().includes('guarda'));
+
+            const maxLongitud = Math.max(conductores.length, guardas.length);
+
+            // Estructuramos los datos para que coincidan con el máximo
+            return Array.from({ length: maxLongitud }, (_, i) => ({
+                conductor: conductores[i] || null,
+                guarda: guardas[i] || null,
+            }));
         },
-        
-        cambiarPestaña() {
-            this.currentTab = !this.currentTab;
-        },
-        cargarTrenDescendente(tren: string) {
-            try {
-                const fecha: Date = this.obtenerFecha();
-                const itinerario: string = this.itinerarioType(fecha);
-
-                //cargo la vuelta en this.indFiltrado
-                this.filtroTrenes(itinerario, tren);
-                //cargamos los turnos en this.turnos
-                this.filtroTurno(itinerario);
-                //buscamos personal
-                this.buscarPersonalACargo(fecha);
-
-                const trenIt = this.buscarTrenItinerario(tren, itinerario);
-                const desde = trenIt[0].estaciones.length - 1;
-                const hasta = 0;
-
-                //cargo tabla
-                this.descendente.tren = parseInt(tren);
-                this.descendente.desde = trenIt[0].estaciones[desde];
-                this.descendente.hasta = trenIt[0].estaciones[hasta];
-                this.descendente.llega = trenIt[0].horarios[hasta];
-
-                //Ctor
-                this.descendente.CtTurno = this.indFiltrado[0].turno;
-                this.descendente.CtNombre = this.indFiltrado[0].personal;
-                this.cargarInfoTren(this.descendente, tren, true);
-
-                //Gda
-                this.descendente.GdTurno = this.indFiltrado[1].turno;
-                this.descendente.GdNombre = this.indFiltrado[1].personal;
-                this.cargarInfoTren(this.descendente, tren, false);
-                
-                this.descendentes.push(this.descendente)
-            } catch (error) {
-                console.log(error);
-            }
-        },
-        async crearSabana(){
-            await this.cargarMasTrenes()
-            this.itinerario.forEach(it=>{
-                console.log(it.tren);
+        loadItems() {
+            const start = (this.currentPage - 1) * this.itemsPerPage;
+            const end = this.currentPage * this.itemsPerPage;
             
-                //this.cargarTrenDescendente(''+it.tren);
+            const itinerarioACargar = this.itinerarioAsc.slice(start,end)
+            let sabanaACargar:SabanaAscendente[]=[];
+
+            itinerarioACargar.forEach(itinerario=>{
+                sabanaACargar.push(this.crearItemSabanaAsc(itinerario))
             })
+            // this.visibleItems.push(...this.allItems.slice(start, end));
+            this.sabanaAsc.push(...sabanaACargar);
+            this.currentPage++;
         },
-        cargarInfoTren(infoTren: Descendente, tren: string, esCtor: boolean) {
-            const vuelta = this.obtenerNumVuelta(tren);
-            const vueltaNum: number = vuelta[0].vuelta;
-
-            // Busco próximo tren
-            const proximoTren = this.obtenerVueltaSiguiente(vueltaNum, tren);
-
-            if (proximoTren.length > 0) {
-                infoTren[esCtor ? "CtSale" : "GdSale"] =
-                    "" + proximoTren[0].tren;
-                infoTren[esCtor ? "CtHora" : "GdHora"] =
-                    "" + proximoTren[0].sale;
-                infoTren[esCtor ? "CtObs" : "GdObs"] =
-                    proximoTren[0].refer !== undefined
-                        ? proximoTren[0].refer + "-"
-                        : "" + proximoTren[0].observaciones !== undefined
-                        ? proximoTren[0].observaciones
-                        : "";
-            } else {
-                // Si no hay más vueltas, mostrar la hora de deja
-                infoTren[esCtor ? "CtSale" : "GdSale"] = "Deja";
-                infoTren[esCtor ? "CtHora" : "GdHora"] =
-                    this.indFiltrado[0].deja;
-            }
-        },
-        obtenerVueltaSiguiente(vueltaNum: number, tren: string) {
-            return this.indFiltrado[0].vueltas.filter((vuelta) => {
-                if (vuelta.tren !== undefined && tren !== undefined) {
-                    return vuelta.vuelta === vueltaNum + 1;
-                }
-            });
-        },
-        obtenerNumVuelta(tren: string) {
-            return this.indFiltrado[0].vueltas.filter((vuelta) => {
-                if (vuelta.tren !== undefined && tren !== undefined) {
-                    return vuelta.tren === parseInt(tren);
-                }
-            });
-        },
-        buscarTrenItinerario(tren: string, itinerario: string) {
-            return this.itinerario.filter((it) => {
-                return it.itinerario == itinerario && it.tren == parseInt(tren);
-            });
-        },
-        itinerarioType(fecha: Date) {
-            if (fecha.getDay() === 0) {
-                return "D";
-            } else if (fecha.getDay() === 6) {
-                return "S";
-            } else {
-                return "H";
-            }
-        },
-        obtenerFecha() {
-            if (this.inputDate == "") {
-                //return this.today ;
-                return new Date("2024-01-12 12:00");
-            } else {
-                return new Date(this.inputDate + " 12:00");
-            }
-        },
-        buscar() {
-            /* Ejecuta en cada búsqueda todos los métodos necesarios.
-            Se ejecuta por v-on:change en el input  */
-            const fecha: Date = this.obtenerFecha();
-            const itinerario: string = this.itinerarioType(fecha);
-            //reinicio variables globales
-            this.turnos = [];
-            this.itFiltrado = [];
-
-            //si no se encuentra tren busco turnos
-            this.filtroTrenes(itinerario, this.tren);
-            if (this.indFiltrado.length > 0) {
-                this.filtroItinerario(itinerario, this.tren);
-                this.filtroTurno(itinerario);
-                this.buscarPersonalACargo(fecha);
-            } else {
-                this.filtrarPorTurno(itinerario, this.tren);
-                this.filtroTurno(itinerario);
-                this.buscarPersonalACargo(fecha);
-            }
-        },
-        filtrarPorTurno(itinerario: string, tren: string) {
-            this.indFiltrado = [];
-            this.turno.forEach((diag: ITurno) => {
-                if (
-                    diag.turno.toLowerCase().includes(tren.toLowerCase()) &&
-                    diag.itinerario == itinerario
-                ) {
-                    this.indFiltrado.push(diag);
-                }
-            });
-        },
-        filtroTrenes(itinerario: string, tren: string) {
-            /* Este método buscar y filtra en el array turno el tren que se desea buscar.
-            guarda en el array indFiltrado el resultado (los turnos que viajan en el tren). */
-            this.indFiltrado = [];
-            this.turno.forEach((diag: ITurno) => {
-                for (let i = 0; i < diag.vueltas.length; i++) {
-                    if (
-                        diag.vueltas[i].tren == parseInt(tren) &&
-                        diag.itinerario == itinerario
-                    ) {
-                        this.indFiltrado.push(diag);
-                    }
-                }
-            });
-        },
-        filtroItinerario(itinerario: string, tren: string) {
-            /* Este método buscar en el array itinerario los horarios de pasadas por cada estación
-            las guarda en el array itFiltrado  */
-            this.itFiltrado = this.itinerario.filter((horarios: Itinerario) => {
-                return (
-                    horarios.tren == parseInt(tren) &&
-                    horarios.itinerario == itinerario
+        crearItemSabanaAsc(itinerario:Itinerario):SabanaAscendente{
+            const tipoIt = itinerarioType(this.today);
+            console.warn('Provisorio: circular');
+            const turnosDelTren = filtroTrenes(tipoIt,this.lstTurnos,['Dic24'],itinerario.tren);
+            buscarPersonalACargo(
+                    this.today,
+                    itinerario.tren,
+                    turnosDelTren,
+                    this.personales,
+                    this.novedades,
+                    this.cambiosTurnos
                 );
-            });
-            try {
-                if (this.itFiltrado[0].tren % 2 == 0) {
-                    this.itFiltrado[0].estaciones.reverse();
-                    this.itFiltrado[0].horarios.reverse();
-                }
-            } catch (e) {
-                console.error(e);
+            buscarCancelacionDiagrama(this.ordenamientos,this.today.toISOString().split('T')[0],turnosDelTren,itinerario.tren)
+            // const conductores = turnosDelTren.filter(turno=> turno.especialidad.includes('cond'));
+            // const guardas = turnosDelTren.filter(turno=> turno.especialidad.includes('guar'));
+
+            
+            const itemSabana:SabanaAscendente = {
+                rotacion:itinerario.rotacion,
+                tren: itinerario.tren,
+                sale: itinerario.horarios[0],
+                origen: itinerario.estaciones[0],
+                destino:itinerario.estaciones[itinerario.estaciones.length -1],
+                paraTren: itinerario.trenSiguiente,
+                paraTrenHora: itinerario.trenSiguienteHora,
+                turnos: turnosDelTren
+                // ctReferencia:conductores.map(ct=>ct.vueltas.find()),
+                // ctTurno:'',
+                // ctNombre:'',
+                // ctLlegaCon:'',
+                // ctRelevo:'',
+                // gdReferencia:'',
+                // gdTurno:'',
+                // gdNombre:'',
+                // gdLlegaCon:'',
+                // gdRelevo:'',
+            } 
+            return itemSabana
+        },
+        handleScroll() {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.body.offsetHeight;
+            console.log(scrollTop,windowHeight,documentHeight);
+            
+            console.log('ho',scrollTop , this.scrollTop);
+
+            // Verifica si el usuario está cerca del final del scroll
+            if (scrollTop > this.scrollTop && scrollTop + windowHeight >= documentHeight - 100) {
+                this.loadItems();
+                console.log('hi',scrollTop , this.scrollTop);
+                
+                this.scrollTop = scrollTop;
             }
         },
-        filtroTurno(itinerario: string) {
-            /* Este método es el encargado de buscar los turnos en cada búsqueda.
-            Primero limpia el array turnos y luego asigna todas las vueltas de cada turno*/
-            this.indFiltrado.forEach((turno: ITurno) => {
-                this.turnos.push(
-                    this.turno.filter((ind: ITurno) => {
-                        return (
-                            ind.turno.includes(turno.turno) &&
-                            ind.itinerario == itinerario
-                        );
-                    })
-                );
-            });
-        },
-        buscarPersonalACargo(fecha: Date) {
-            /* Este método es el encargado de buscar y cambiar el nombre del personal en cada búsqueda.
-            El método busca en el array turnos utilizando la función filtroPersonal, el resultado lo
-            guarda en un nuevo array llamado list para luego buscar y modificar el nombre del personal en
-            el array indFiltrado y posterior en el mismo array turnos. */
-            const list = [];
+        separarTrenesPorSentidoYPCOrdenar(){
+            const ordenarPorHorario = (itinerario:Itinerario[])=>{
+                itinerario.sort((it,it2)=>{
+                    // return esHoraMayor(it.horarios[0],it2.horarios[0])
+                    const [hora1, minuto1] = it.horarios[0].split(':').map(Number);
+                    const [hora2, minuto2] = it2.horarios[0].split(':').map(Number);
 
-            //   busco el personal titular
-            list.push(
-                this.turnos.map((turno: ITurno[]) => {
-                    return this.filtroPersonal(turno[0].turno, fecha);
+                    const minutosTotales1 = hora1 * 60 + minuto1;
+                    const minutosTotales2 = hora2 * 60 + minuto2;
+
+                    return minutosTotales1 - minutosTotales2;
                 })
-            );
-            try {
-                list[0].forEach((personal) => {
-                    this.novedades.forEach((novedad) => {
-                        //si tiene novedad cargada y vigente se cambia por el remplazo si tiene sino sin cubrir
-                        if (
-                            novedad.legajo == personal.legajo &&
-                            novedad.HNA &&
-                            new Date(novedad.fechaBaja) <= this.today
-                        ) {
-                            if (
-                                novedad.remplazo != undefined &&
-                                novedad.remplazo.length > 0
-                            ) {
-                                const remplazo = novedad.remplazo.filter(
-                                    (remp) => {
-                                        return (
-                                            new Date(remp.inicioRelevo) <=
-                                                new Date(this.inputDate) &&
-                                            (new Date(remp.finRelevo) >=
-                                                new Date(this.inputDate) ||
-                                                remp.finRelevo == undefined)
-                                        );
-                                    }
-                                );
-
-                                if (remplazo.length > 0) {
-                                    personal.legajo = remplazo[0].legajo;
-                                    personal.nombres =
-                                        remplazo[0].apellido +
-                                        " " +
-                                        remplazo[0].nombres;
-                                } else {
-                                    //si el personal asignado no es para la fecha
-                                    personal.nombres = "Sin Cubrir";
-                                }
-                            } else {
-                                //si no hay personal asignado
-                                personal.nombres = "Sin Cubrir";
-                            }
-                        }
-
-                        //asigno personal al array indFiltrado
-                        this.indFiltrado.forEach((vuelta: ITurno) => {
-                            if (vuelta.turno.trim() === personal.turno) {
-                                vuelta.personal = personal.nombres;
-                            }
-                        });
-                    });
-                });
-            } catch (e) {
-                console.error(e);
             }
-        },
-        dia_laboral(diaLaboral: number, hoy: number) {
-            /*   # devuelve el día de la semana como un número entero donde el Domingo
-            está indexado como 0 y el Sábado como 6
-            Al ingresarle por parámetros la cantidad de días del turno pos franco y
-            el dia de la semana actual devuelve el dia del franco del turno mismo. */
-            const diagrama = [
-                [0, 1, 2, 3, 4, 5, 6],
-                [6, 0, 1, 2, 3, 4, 5],
-                [5, 6, 0, 1, 2, 3, 4],
-                [4, 5, 6, 0, 1, 2, 3],
-                [3, 4, 5, 6, 0, 1, 2],
-                [2, 3, 4, 5, 6, 0, 1],
-                [1, 2, 3, 4, 5, 6, 0],
-            ];
-            return diagrama[diaLaboral][hoy]; //:franco
-        },
-        filtroPersonal(turno: string, fecha: Date) {
-            /* Recibe por parámetro un turno ej:405.5 en caso que sea un diagrama de 7 días
-            o 428 en caso de unipersonal. Según el caso separa por el punto el turno de la jornada pos franco
-            y devuelve un objeto con las llaves:turno y nombres  */
 
-            try {
-                let titular = [];
-                turno = turno.trim();
-
-                if (
-                    turno.indexOf(".") != -1 &&
-                    !turno.toLowerCase().includes("PROG".toLowerCase())
-                ) {
-                    const indexPunto = turno.indexOf(".");
-                    const diaLab = Number(turno[indexPunto + 1]);
-                    const diag = turno.split(".")[0];
-                    const franco = this.dia_laboral(diaLab, fecha.getDay());
-                    titular = this.personales.filter((p) => {
-                        return p.turno == diag && Number(p.franco) == franco;
-                    });
-                } else {
-                    titular = this.personales.filter(
-                        (p) => p.turno.toLowerCase() == turno.toLowerCase()
-                    );
-                }
-                return {
-                    turno: turno,
-                    legajo: titular[0].legajo,
-                    nombres: titular[0].apellido + " " + titular[0].nombres,
-                };
-            } catch (e) {
-                console.error(e);
-                return {};
-            }
-        },
-        changeDate() {
-            this.today = new Date(this.inputDate + " 12:00");
+            this.itinerarioAsc = this.itinerario.filter(it=>{
+                return (!esUltimoCaracterPar(it.tren) && (it.estaciones.includes('PC')||it.estaciones.includes('TY')))
+            })
+            this.itinerarioDes = this.itinerario.filter(it=>{
+                return (esUltimoCaracterPar(it.tren) && (it.estaciones.includes('PC')||it.estaciones.includes('TY')))
+            })
+            ordenarPorHorario(this.itinerarioAsc)
+            ordenarPorHorario(this.itinerarioDes)
         },
     },
-    created() {
+    mounted() {
+        window.addEventListener('scroll', this.handleScroll);
+    },
+    beforeDestroy() {
+        window.removeEventListener('scroll', this.handleScroll);
+    },
+    async created() {
         try {
-            this.loadTurnos();
-            //this.loadItinerario();
-            this.loadPersonales();
-            this.loadNovedades();
+            this.lstTurnos = await loadTurnos() || [];
+            this.itinerario = await loadItinerarios() || [];
+            this.cambiosTurnos = await loadCambiosTurnos() || [];
+            this.personales = await loadPersonales() || [];
+            this.novedades = await loadNovedades() || [];
+            this.separarTrenesPorSentidoYPCOrdenar()
+            
             this.today.setHours(12, 0, 0, 0);
+            this.loadItems()
             newToken();
         } catch (error) {
             console.error(error);
@@ -555,14 +344,12 @@ export default defineComponent({
     },
     computed: {},
     components: {
-        NavBar,
-        FooterPage,
     },
 });
 </script>
 <style>
 main {
-    min-height: 81.6vh;
+    margin-top: 5rem;
 }
 .Personal {
     background: #000;
