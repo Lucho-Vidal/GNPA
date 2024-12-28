@@ -183,7 +183,7 @@ import { newToken } from "../../services/signService";
 import { CambioTurno } from '../../interfaces/ICambioTurno';
 import { loadItinerarios, loadCambiosTurnos, loadPersonales, loadNovedades, loadOrdenamientos, loadTurnos } from '../../utils/funciones';
 import { filtrarPorTurno, filtroItinerario, filtroTrenes, obtenerTiposCirculares } from "../../utils/turnos";
-import { buscarPersonalACargo } from "../../utils/personal";
+import { buscarCancelacionDiagrama, buscarPersonalACargo } from "../../utils/personal";
 import { Ordenamiento } from "../../interfaces/IOrdenamientos";
 
 export default defineComponent({
@@ -279,28 +279,29 @@ export default defineComponent({
                     this.novedades,
                     this.cambiosTurnos
                 );
-                //Aca si hay una cancelacion de diagrama vamos a cambiarle el nombre por "Sin Cubrir"
-                const ordenamientos = this.ordenamientos.filter((orden:Ordenamiento)=>{                
-                    return orden.fecha.split(",")[0] === new Date(this.inputDate+"T12:00").toLocaleDateString();
-                });                
+                buscarCancelacionDiagrama(this.ordenamientos,this.inputDate,this.turnosAImprimir,this.tren)
+                // //Aca si hay una cancelacion de diagrama vamos a cambiarle el nombre por "Sin Cubrir"
+                // const ordenamientos = this.ordenamientos.filter((orden:Ordenamiento)=>{                
+                //     return orden.fecha.split(",")[0] === new Date(this.inputDate+"T12:00").toLocaleDateString();
+                // });                
 
-                ordenamientos.forEach(orden=>{                    
-                    this.turnosAImprimir.forEach((turno:ITurno)=>{
-                        if(turno.turno === orden.turnoEfectivo && orden.tipo === "cancelacionDiagrama") {
-                            turno.personal = "Diagrama Cancelado"
-                        }                        
-                    });
-                    if( 
-                        (orden.turno.vueltas.some(vuelta => {
-                            return vuelta.tren.toLowerCase().includes(this.tren.toLowerCase())
-                        }) ||
-                        orden.turnoEfectivo.toLowerCase().includes(this.tren.toLowerCase())) && 
-                        orden.tipo === "ordenamiento"
-                    ){
-                        orden.turno.personal = `Ordenado: ${orden.personal.apellido}, ${orden.personal.nombres}`
-                        this.turnosAImprimir.push(orden.turno) 
-                    }
-                })
+                // ordenamientos.forEach(orden=>{                    
+                //     this.turnosAImprimir.forEach((turno:ITurno)=>{
+                //         if(turno.turno === orden.turnoEfectivo && orden.tipo === "cancelacionDiagrama") {
+                //             turno.personal = "Diagrama Cancelado"
+                //         }                        
+                //     });
+                //     if( 
+                //         (orden.turno.vueltas.some(vuelta => {
+                //             return vuelta.tren.toLowerCase().includes(this.tren.toLowerCase())
+                //         }) ||
+                //         orden.turnoEfectivo.toLowerCase().includes(this.tren.toLowerCase())) && 
+                //         orden.tipo === "ordenamiento"
+                //     ){
+                //         orden.turno.personal = `Ordenado: ${orden.personal.apellido}, ${orden.personal.nombres}`
+                //         this.turnosAImprimir.push(orden.turno) 
+                //     }
+                // })
             }
         },
         obtenerFecha(fecha: string, today: Date) {

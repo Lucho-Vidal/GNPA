@@ -3,6 +3,7 @@ import { esFechaIgual, esFechaMayorIgual } from "./fechas";
 import { IPersonal } from "@/interfaces/IPersonal";
 import { ITurno } from "@/interfaces/ITurno";
 import { CambioTurno } from "@/interfaces/ICambioTurno";
+import { Ordenamiento } from "@/interfaces/IOrdenamientos";
 
 /**
  * Busca y asigna el personal a cargo para los turnos a imprimir en una fecha específica.
@@ -216,5 +217,28 @@ export function obtenerDotaciones(personal: IPersonal[]) {
 
     return dotacionesUnicas;
 }
+export function buscarCancelacionDiagrama(ordenamientos:Ordenamiento[],inputDate:string,turnosAImprimir:ITurno[],tren:string){
+    //Aca si hay una cancelacion de diagrama vamos a cambiarle el nombre por "Sin Cubrir"
+    const ordenamientosFiltrados = ordenamientos.filter((orden:Ordenamiento)=>{                
+        return orden.fecha.split(",")[0] === new Date(inputDate+"T12:00").toLocaleDateString();
+    });                
 
+    ordenamientosFiltrados.forEach(orden=>{                    
+        turnosAImprimir.forEach((turno:ITurno)=>{
+            if(turno.turno === orden.turnoEfectivo && orden.tipo === "cancelacionDiagrama") {
+                turno.personal = "Diagrama Cancelado"
+            }                        
+        });
+        if( 
+            (orden.turno.vueltas.some(vuelta => {
+                return vuelta.tren.toLowerCase().includes(tren.toLowerCase())
+            }) ||
+            orden.turnoEfectivo.toLowerCase().includes(tren.toLowerCase())) && 
+            orden.tipo === "ordenamiento"
+        ){
+            orden.turno.personal = `Ordenado: ${orden.personal.apellido}, ${orden.personal.nombres}`
+            turnosAImprimir.push(orden.turno) 
+        }
+    })
+}
 
