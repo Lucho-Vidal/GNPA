@@ -1,5 +1,8 @@
-export interface Descendente {
-    tren: number,
+import { ITurno } from "./ITurno"
+
+export interface SabanaDescendente {
+    rotacion:string,
+    tren: string,
     desde: string,
     hasta: string,
     llega: string,
@@ -15,18 +18,23 @@ export interface Descendente {
     GdObs: string
 }
 
-export interface Ascendente {
-    tren: number,
+export interface SabanaAscendente {
+    rotacion: string,
+    tren: string,
     sale: string,
     origen: string,
     destino: string,
     paraTren: string,
-    CtTurno: string,
-    CtNombre: string,
-    CtLlegaCon: string,
-    CtRelevo: string,
-    GdTurno: string,
-    GdNombre: string,
-    GdLlegaCon: string,
-    GdRelevo: string,
+    paraTrenHora: string,
+    turnos: Array<ITurno>
+    // ctReferencia: string[],
+    // ctTurno: string[],
+    // ctNombre: string[],
+    // ctLlegaCon: string[],
+    // ctRelevo: string[],
+    // gdReferencia: string[],
+    // gdTurno: string[],
+    // gdNombre: string[],
+    // gdLlegaCon: string[],
+    // gdRelevo: string[],
 }
