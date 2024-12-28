@@ -173,3 +173,34 @@ export async function guardarRegistro(today:Date,accion:string,turno?: ITurno,pe
     };
     await createRegistro(registro);
 }
+/**
+ * Determina si el último carácter de un string representa un número par.
+ * 
+ * @param {string} input - El string que se evaluará.
+ * @returns {boolean | null} - Retorna `true` si el último carácter es un número par, 
+ *                             `false` si es impar, y `null` si el último carácter no es un número.
+ * 
+ * @example
+ * // Caso donde el último carácter es un número par
+ * esUltimoCaracterPar("1234"); // true
+ * 
+ * @example
+ * // Caso donde el último carácter es un número impar
+ * esUltimoCaracterPar("1235"); // false
+ * 
+ * @example
+ * // Caso donde el último carácter no es un número
+ * esUltimoCaracterPar("abc"); // null
+ */
+export function esUltimoCaracterPar(input: string): boolean | null {
+    const ultimoCaracter = input.slice(-1); // Obtiene el último carácter del string
+    const numero = parseInt(ultimoCaracter, 10); // Convierte el carácter a un número entero
+
+    if (isNaN(numero)) {
+        // Retorna null si no se puede convertir el carácter a número
+        return null;
+    }
+
+    // Verifica si el número es par
+    return numero % 2 === 0;
+}
