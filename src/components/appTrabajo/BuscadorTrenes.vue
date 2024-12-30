@@ -62,33 +62,24 @@
                 </div>
             </div>
         </div>
-            <div class=""></div>
-            <table class="table table-striped table-hover">
-                <thead v-if="horarios !== null">
-                    <tr v-if="horarios.estaciones !== undefined">
-                        <th
-                            v-for="i in horarios.estaciones.length"
-                            :key="i"
-                            colspan="1"
-                        >
-                            {{ horarios.estaciones[i - 1] }}
+            <table v-if="horarios" class="table table-striped table-hover">
+                <thead >
+                    <tr >
+                        <th v-for="(estacion,i) in horarios.estaciones" :key="i" colspan="1">
+                            {{ estacion }}
                         </th>
                     </tr>
                 </thead>
-                <tbody v-if="horarios !== null">
-                    <tr v-if="horarios.horarios !== undefined">
-                        <th
-                            v-for="i in horarios.horarios.length"
-                            :key="i"
-                            colspan="1"
-                        >
-                            {{ horarios.horarios[i - 1] }}
-                        </th>
+                <tbody>
+                    <tr >
+                        <td v-for="(horario,i) in horarios.horarios" :key="i" colspan="1">                            
+                            {{ horario }}
+                        </td>
                     </tr>
                 </tbody>
             </table>
             <table
-                v-if="turnosAImprimir !== null"
+                v-if="turnosAImprimir "
                 class="table table-striped table-hover"
             >
                 <thead>
@@ -185,6 +176,7 @@ import { loadItinerarios, loadCambiosTurnos, loadPersonales, loadNovedades, load
 import { filtrarPorTurno, filtroItinerario, filtroTrenes, obtenerTiposCirculares } from "../../utils/turnos";
 import { buscarCancelacionDiagrama, buscarPersonalACargo } from "../../utils/personal";
 import { Ordenamiento } from "../../interfaces/IOrdenamientos";
+import { itinerarioType } from "../../utils/fechas";
 
 export default defineComponent({
     data() {
@@ -195,7 +187,8 @@ export default defineComponent({
             
             lstTurnos: [] as ITurno[],
             personales: [] as IPersonal[],
-            itinerario: [] as Itinerario[],
+            itinerarios: [] as Itinerario[],
+            horarios: {} as Itinerario,
             novedades: [] as Novedad[],
             cambiosTurnos: [] as  CambioTurno[],
             ordenamientos: [] as Ordenamiento[],
@@ -204,7 +197,6 @@ export default defineComponent({
             circularSeleccionada: [] as string[],
             
             turnosAImprimir: [] as ITurno[] ,
-            horarios: {} as Itinerario | null,
             
             today: new Date(),
             inputDate: "" as string,
@@ -225,11 +217,11 @@ export default defineComponent({
             /* Ejecuta en cada búsqueda todos los métodos necesarios. 
             Se ejecuta por v-on:change en el input  */
             //limpio variables globales
-            this.horarios = null;
+            this.horarios = {} as Itinerario;
             this.turnosAImprimir = [];
 
             const fecha: Date = this.obtenerFecha(this.inputDate, this.today);
-            const itinerario: string = this.itinerarioType(fecha);
+            const itinerario: string = itinerarioType(fecha);
 
             if (this.tren !== "") {
                 // Define un objeto de prioridad para las especialidades
@@ -259,8 +251,9 @@ export default defineComponent({
                     
                     this.horarios = filtroItinerario(
                         itinerario,
-                        this.itinerario,
-                        this.tren
+                        this.itinerarios,
+                        this.tren,
+                        this.circularSeleccionada
                     );
                 }else {
                     this.turnosAImprimir = filtrarPorTurno(
@@ -293,22 +286,6 @@ export default defineComponent({
                 return new Date(fecha + " 12:00");
             }
         },
-        itinerarioType(fecha: Date) {
-            if (this.inputIt === "") {
-                if (fecha.getDay() === 0) {
-                    this.inputIt = "D";
-                    return "D";
-                } else if (fecha.getDay() === 6) {
-                    this.inputIt = "S";
-                    return "S";
-                } else {
-                    this.inputIt = "H";
-                    return "H";
-                }
-            } else {
-                return this.inputIt;
-            }
-        },
         cambioCirculares() {
             window.localStorage.setItem(
                 "circularSeleccionada",
@@ -328,7 +305,7 @@ export default defineComponent({
 
             this.lstTurnos = await loadTurnos() || [];
             this.circulares = obtenerTiposCirculares(this.lstTurnos);
-            this.itinerario = await loadItinerarios() || [];
+            this.itinerarios = await loadItinerarios() || [];
             this.cambiosTurnos = await loadCambiosTurnos() || [];
             this.personales = await loadPersonales() || [];
             this.novedades = await loadNovedades() || [];
