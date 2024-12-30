@@ -5,6 +5,21 @@
 
             <div class="d-flex justify-content-end mx-5">
                 <ul class="nav nav-tabs">
+                    <li>
+                        <select
+                            name="itinerario"
+                            id="itinerario"
+                            class="form-control ms-3 w-auto"
+                            required
+                            v-model="inputIt"
+                            @change="separarTrenesPorSentidoYPCOrdenar"
+                        >
+                            <option value=""></option>
+                            <option value="H">Hábil</option>
+                            <option value="S">Sábado</option>
+                            <option value="D">Domingo</option>
+                        </select>
+                    </li>
                     <li class="nav-item">
                         <button
                             class="nav-link"
@@ -84,78 +99,59 @@
             >
                 <thead>
                     <tr>
-                        <th class="" colspan="0" rowspan="2">Rotación</th>
-                        <th class="" colspan="1" rowspan="2">Tren  Sale</th>
-                        <th class="" colspan="1" rowspan="2">Origen / Destino</th>
+                        <th class="" colspan="1" rowspan="1" style="width: 10px;">R</th>
+                        <th class="" colspan="2" rowspan="1">Tren  Sale</th>
+                        <th class="" colspan="1" rowspan="1">Origen / Destino</th>
                         <th class="" colspan="2" rowspan="1">Para tren</th>
-                        <th class="" colspan="4" rowspan="1">Conductor</th>
-                        <th class="" colspan="4" rowspan="1">Guarda</th>
-                    </tr>
-                    <tr>
-                        <th class="" colspan="1" rowspan="1">Hora en</th>
-                        <!-- Conductor -->
-                        <th class="" colspan="1" rowspan="1">ref</th>
-                        <th class="" colspan="1" rowspan="1">Turno</th>
-                        <th class="" colspan="1" rowspan="1">Nombre</th>
-                        <th class="" colspan="1" rowspan="1">Llega con</th>
-                        <th class="" colspan="1" rowspan="1">Relevo</th>
-                        <!-- Guarda -->
-                        <th class="" colspan="1" rowspan="1">ref</th>
-                        <th class="" colspan="1" rowspan="1">Turno</th>
-                        <th class="" colspan="1" rowspan="1">Nombre</th>
-                        <th class="" colspan="1" rowspan="1">Llega con</th>
-                        <th class="" colspan="1" rowspan="1">Relevo</th>
                     </tr>
                 </thead>
                 <tbody
                 v-for="(tren, index) in sabanaAsc" :key="index"
                 >
-                    <tr class="Small shadow" 
+                    <tr class="bg-color" 
                         >
-                        <td class="col-1">{{ tren.rotacion }}</td>
-                        <td class="col-1">{{ tren.tren+' '+ tren.sale }}</td>
-                        <td class="col-1">{{ tren.origen +' => '+ tren.destino }}</td>
-                        <td class="col-1">{{ tren.paraTren +' '+tren.paraTrenHora }}</td>
+                        <td class="col-1" style="width: 10px;">{{ tren.rotacion }}</td>
+                        <td class="col-1 negrita font-mayor" colspan="2">{{ tren.tren+' '+ tren.sale }}</td>
+                        <td class="col-1 font-medio" >{{ tren.origen  }} <i class="fa-solid fa-arrow-right"></i> {{ tren.destino }}</td>
+                        <td class="col-1" colspan="2">
+                            {{ `${tren.paraTren} ` +
+                                (itinerarioIndex[tren.paraTren]?.horarioXEst?.['PC'] ?
+                                `PC: ${itinerarioIndex[tren.paraTren].horarioXEst['PC']}` :
+                                tren.paraTrenHora) }}
+                        </td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
                         
                     </tr>
-                    <tr v-for="(item, i) in obtenerDatosMaximos(tren.turnos)"
-                        :key="i">
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1"></td>
-                        <td class="col-1">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
-                        <td class="col-1">{{ item.conductor?.turno || '' }}</td>
-                        <td class="col-1">{{ item.conductor?.personal || '' }}</td>
+                    <tr v-for="(item, i) in obtenerDatosMaximos(tren.turnos)" :key="i">
+                        <!-- Conductores -->
+                        <td class="col-1" style="width: 10px;">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
+                        <td class="col-1 font-medio">{{ item.conductor?.turno || '' }}</td>
+                        <td class="col-3 negrita"> 
+                            <span :class="{resaltado: item.conductor?.personal === 'Sin Cubrir' || 
+                                    item.conductor?.personal === 'Diagrama Cancelado','resaltado-verde': 
+                                    item.conductor?.personal.includes('Ordenado')}">
+                                {{ item.conductor?.personal || '' }}
+                            </span>
+                        </td>
+                        <td class="col-1">{{ buscarServicioAnterior(item.conductor,tren.tren) }}</td>
+                        <td class="col-1">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.observaciones || '' }}</td>
                         
-                        <td class="col-3">{{ 
-                            (() => {
-                                    const vueltaActual = item.conductor?.vueltas.find(v => v.tren === tren.tren);
-                                    if (vueltaActual?.vuelta && vueltaActual.vuelta > 1) {
-                                        // Busca la vuelta anterior
-                                        const vueltaAnterior = item.conductor?.vueltas.find(v => v.vuelta === vueltaActual.vuelta - 1);
-                                        return vueltaAnterior?.tren ? `${vueltaAnterior?.tren}  ${vueltaAnterior?.llega}` : 'Toma';
-                                    }
-                                    return 'Toma';
-                                })()
-                            }}</td>
-                        <td class="col-1"></td>
+                        <!-- Guardas -->
                         <td class="col-1">{{ item.guarda?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
-                        <td class="col-1">{{ item.guarda?.turno || '' }}</td>
-                        <td class="col-1">{{ item.guarda?.personal || '' }}</td>
+                        <td class="col-1 font-medio">{{ item.guarda?.turno || '' }}</td>
+                        <td class="col-3 negrita"> 
+                            <span :class="{resaltado: item.guarda?.personal === 'Sin Cubrir' || 
+                                    item.guarda?.personal === 'Diagrama Cancelado','resaltado-verde': 
+                                    item.guarda?.personal.includes('Ordenado')}">
+                                {{ item.guarda?.personal || '' }}
+                            </span>
+                        </td>
                         
-                        <td class="col-3">{{ 
-                            (() => {
-                                    const vueltaActual = item.guarda?.vueltas.find(v => v.tren === tren.tren);
-                                    if (vueltaActual?.vuelta && vueltaActual.vuelta > 1) {
-                                        // Busca la vuelta anterior
-                                        const vueltaAnterior = item.guarda?.vueltas.find(v => v.vuelta === vueltaActual.vuelta - 1);
-                                        return vueltaAnterior?.tren ? `${vueltaAnterior?.tren}  ${vueltaAnterior?.llega}` : 'Toma';
-                                    }
-                                    return 'Toma';
-                                })()
-                            }}</td>
-                        <td class="col-1"></td>
+                        <td class="col-3">{{ buscarServicioAnterior(item.guarda,tren.tren)}}</td>
+                        <td class="col-1">{{ item.guarda?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.observaciones || '' }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -201,10 +197,12 @@ export default defineComponent({
             personales: [] as IPersonal[],
             itinerario: [] as Itinerario[],
             novedades: [] as Novedad[],
+            itinerarioIndex: {} as Record<string,Itinerario>,
             cambiosTurnos: [] as  CambioTurno[],
             ordenamientos: [] as Ordenamiento[],
 
             today: new Date(),
+            inputIt: '',
         };
     },
     methods: {
@@ -241,10 +239,20 @@ export default defineComponent({
             this.sabanaAsc.push(...sabanaACargar);
             this.currentPage++;
         },
+        buscarServicioAnterior(turno:ITurno,tren:string){
+            
+            const vueltaActual = turno?.vueltas?.find(v => v.tren === tren);
+            if (vueltaActual?.vuelta === 1) return `Toma: ${turno?.toma}`
+            else if (vueltaActual?.vuelta && vueltaActual.vuelta > 1) {
+                // Busca la vuelta anterior
+                const vueltaAnterior = turno?.vueltas.find(v => v.vuelta === vueltaActual.vuelta - 1);
+                return vueltaAnterior?.tren ? `${vueltaAnterior?.tren}  ${vueltaAnterior?.llega}` : `${vueltaAnterior?.refer.replace(/ /g, "").toLowerCase()}`;
+            }
+            return '-';
+        },
         crearItemSabanaAsc(itinerario:Itinerario):SabanaAscendente{
-            const tipoIt = itinerarioType(this.today);
             console.warn('Provisorio: circular');
-            const turnosDelTren = filtroTrenes(tipoIt,this.lstTurnos,['Dic24'],itinerario.tren);
+            const turnosDelTren = filtroTrenes(this.inputIt,this.lstTurnos,['Dic24'],itinerario.tren);
             buscarPersonalACargo(
                     this.today,
                     itinerario.tren,
@@ -267,16 +275,6 @@ export default defineComponent({
                 paraTren: itinerario.trenSiguiente,
                 paraTrenHora: itinerario.trenSiguienteHora,
                 turnos: turnosDelTren
-                // ctReferencia:conductores.map(ct=>ct.vueltas.find()),
-                // ctTurno:'',
-                // ctNombre:'',
-                // ctLlegaCon:'',
-                // ctRelevo:'',
-                // gdReferencia:'',
-                // gdTurno:'',
-                // gdNombre:'',
-                // gdLlegaCon:'',
-                // gdRelevo:'',
             } 
             return itemSabana
         },
@@ -311,14 +309,24 @@ export default defineComponent({
             }
 
             this.itinerarioAsc = this.itinerario.filter(it=>{
-                return (!esUltimoCaracterPar(it.tren) && (it.estaciones.includes('PC')||it.estaciones.includes('TY')))
+                return (!esUltimoCaracterPar(it.tren) && (it.estaciones.includes('PC')||it.estaciones.includes('TY')) && it.itinerario === this.inputIt)
             })
             this.itinerarioDes = this.itinerario.filter(it=>{
-                return (esUltimoCaracterPar(it.tren) && (it.estaciones.includes('PC')||it.estaciones.includes('TY')))
+                return (esUltimoCaracterPar(it.tren) && (it.estaciones.includes('PC')||it.estaciones.includes('TY')) && it.itinerario === this.inputIt)
             })
             ordenarPorHorario(this.itinerarioAsc)
             ordenarPorHorario(this.itinerarioDes)
         },
+        indexarItinerario(itinerarios: Itinerario[]) {
+            return itinerarios.reduce(
+                (acumulador: Record<string, Itinerario>, itinerario: Itinerario) => {
+                    acumulador[itinerario.tren] = itinerario;
+                    return acumulador;
+                },
+                {} as Record<string, Itinerario>
+            );
+        },
+        
     },
     mounted() {
         window.addEventListener('scroll', this.handleScroll);
@@ -333,7 +341,11 @@ export default defineComponent({
             this.cambiosTurnos = await loadCambiosTurnos() || [];
             this.personales = await loadPersonales() || [];
             this.novedades = await loadNovedades() || [];
+            this.itinerarioIndex = this.indexarItinerario(this.itinerario)
+
+            this.inputIt = itinerarioType(this.today);
             this.separarTrenesPorSentidoYPCOrdenar()
+
             
             this.today.setHours(12, 0, 0, 0);
             this.loadItems()
@@ -354,11 +366,38 @@ main {
 .Personal {
     background: #000;
     width: 150px;
-    border-top: #000;
+    border-top: #0e0ee0;
     color: #fff;
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-around;
     border-radius: 0.5rem;
+}
+.bg-color{
+    border-top: #000 3px solid;
+}
+.negrita{
+    font-weight: bold;
+}
+.font-mayor{
+    font-size: 1.8rem;
+}
+.font-medio{
+    font-size: 1.3rem;
+}
+.resaltado {
+    background-color: red;
+    color: white;
+    margin-inline: 10px;
+    padding: 5px 50px; /* Opcional para agregar espaciado */
+    border-radius: 4px; /* Opcional para bordes redondeados */
+}
+.resaltado-verde {
+    background-color: lightgreen; /* Fondo verde claro */
+    color: black;    
+    margin-inline: 10px;
+    padding: 5px; /* Opcional para agregar espaciado */
+    border-radius: 4px; /* Opcional para bordes redondeados */  
+    font-weight: bold;
 }
 </style>
