@@ -111,33 +111,17 @@ export function filtroTrenes(itinerario: string,listaTurnos: ITurno[],circularSe
  * @param itinerario - El itinerario que se utilizará para filtrar los horarios.
  * @param listaItinerario - Un array de objetos que representan los itinerarios a filtrar.
  * @param tren - El número del tren que se utilizará para el filtrado.
+ * @param circular - Es el listado de circulares seleccionadas.
  *
  * @returns Un objeto que representa los horarios del tren en el itinerario especificado,
  *          o un objeto vacío si no se encuentra coincidencias.
  */
-export function filtroItinerario(itinerario: string, listaItinerario: Itinerario[], tren: string) {
-    const itFiltrados = listaItinerario.filter(
-        (it: Itinerario) => it.tren === parseInt(tren) && it.itinerario === itinerario
-    );
-
-    const horarios: Itinerario = {
-        id: null,
-        tren: 0,
-        itinerario: "",
-        estaciones: [],
-        horarios: [],
-    };
-
-    if (itFiltrados.length === 1) {
-        const result = itFiltrados[0];
-        if (result.tren % 2 === 0) {
-            result.estaciones.reverse();
-            result.horarios.reverse();
-        }
-        return result;
-    }
-    
-    return horarios;
+export function filtroItinerario(itinerario: string, listaItinerario: Itinerario[], tren: string,circular:string[]):Itinerario {
+    return listaItinerario.find((it: Itinerario) => 
+        it.tren === tren && 
+        it.itinerario === itinerario &&
+        circular.includes(it.circular)
+    ) as Itinerario;
 }
 
 /**
