@@ -40,75 +40,115 @@
                     </li>
                 </ul>
             </div>
-            <hr>
 
             <table
                 v-if="!currentTab"
-                class="col-6 table table-striped table-hover"
+                class="col table table-striped table-hover"
             >
-                <thead>
-                    <tr>
-                        <th class="" colspan="1" rowspan="2">Tren</th>
-                        <th class="" colspan="1" rowspan="2">Desde</th>
-                        <th class="" colspan="1" rowspan="2">Hasta</th>
-                        <th class="" colspan="1" rowspan="2">LLega</th>
-                        <th class="" colspan="5" rowspan="1">Conductor</th>
-                        <th class="" colspan="5" rowspan="1">Guarda</th>
+                <thead >
+                    <tr class="border-enX border-arriba">
+                        <th class="" colspan="1" rowspan="1" style="width: 10px;">R</th>
+                        <th class="" colspan="2" rowspan="1">Tren - Llega</th>
+                        <th class="" colspan="7" rowspan="1">Origen / Destino</th>
+                        
                     </tr>
-                    <tr>
-                        <!-- Conductor -->
+                    <tr class="border-enX">
+                        <th class="" colspan="5" rowspan="1">Conductores</th>
+                        <th class="" colspan="5" rowspan="1">Guardas</th>
+                    </tr>
+                    <tr class="border-enX">
+                        <th class="" colspan="1" rowspan="1">Ref</th>
                         <th class="" colspan="1" rowspan="1">Turno</th>
-                        <th class="" colspan="1" rowspan="1">Nombre</th>
-                        <th class="" colspan="1" rowspan="1">Sale</th>
-                        <th class="" colspan="1" rowspan="1">Hora</th>
-                        <th class="" colspan="1" rowspan="1">Observación</th>
-                        <!-- Guarda -->
+                        <th class="" colspan="1" rowspan="1">Apellido y nombres</th>
+                        <th class="" colspan="1" rowspan="1">LLega con</th>
+                        <th class="" colspan="1" rowspan="1">Observaciones</th>
+
+                        <th class="" colspan="1" rowspan="1">Ref</th>
                         <th class="" colspan="1" rowspan="1">Turno</th>
-                        <th class="" colspan="1" rowspan="1">Nombre</th>
-                        <th class="" colspan="1" rowspan="1">Sale</th>
-                        <th class="" colspan="1" rowspan="1">Hora</th>
-                        <th class="" colspan="1" rowspan="1">Observación</th>
+                        <th class="" colspan="1" rowspan="1">Apellido y nombres</th>
+                        <th class="" colspan="1" rowspan="1">LLega con</th>
+                        <th class="" colspan="1" rowspan="1">Observaciones</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr 
-                        class="Small shadow"
-                        v-for="(desc, index) in sabanaDes"
-                        :key="index"
-                    >
-                        <td class="col-1">{{ desc.tren }}</td>
-                        <td class="col-1">{{ desc.desde }}</td>
-                        <td class="col-1">{{ desc.hasta }}</td>
-                        <td class="col-1">{{ desc.llega }}</td>
-                        <td class="col-1">{{ desc.CtTurno }}</td>
-                        <td class="col-2">{{ desc.CtNombre }}</td>
-                        <td class="col-1">{{ desc.CtSale }}</td>
-                        <td class="col-1">{{ desc.CtHora }}</td>
-                        <td class="col-1">{{ desc.CtObs }}</td>
-                        <td class="col-1">{{ desc.GdTurno }}</td>
-                        <td class="col-3">{{ desc.GdNombre }}</td>
-                        <td class="col-1">{{ desc.GdSale }}</td>
-                        <td class="col-1">{{ desc.GdHora }}</td>
-                        <td class="col-1">{{ desc.GdObs }}</td>
+                <tbody
+                v-for="(tren, index) in sabanaDes" :key="index"
+                >
+                    <tr class="border-arriba border-enX" 
+                        >
+                        <td class="col-1" style="width: 10px;">{{ tren.rotacion }}</td>
+                        <td class="col-1 negrita font-mayor" colspan="2">{{ tren.tren+' '+ tren.llega }}</td>
+                        <td class="col-1 font-medio" >{{ tren.desde  }} <i class="fa-solid fa-arrow-right"></i> {{ tren.hasta }}</td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                        <td class="col-1"></td>
+                    </tr>
+                    <tr class="border-enX" v-for="(item, i) in obtenerDatosMaximos(tren.turnos)" :key="i">
+                        <!-- Conductores -->
+                        <td class="col-1" style="width: 10px;">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
+                        <td class="col-1 font-medio">{{ item.conductor?.turno || '' }}</td>
+                        <td class="col-3 negrita"> 
+                            <span :class="{resaltado: item.conductor?.personal === 'Sin Cubrir' || 
+                                    item.conductor?.personal === 'Diagrama Cancelado','resaltado-verde': 
+                                    item.conductor?.personal.includes('Ordenado')}">
+                                {{ item.conductor?.personal || '' }}
+                            </span>
+                        </td>
+                        <td class="col-1">{{ buscarServicioPosterior(item.conductor,tren.tren) }}</td>
+                        <td class="col-1">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.observaciones || '' }}</td>
+                        
+                        <!-- Guardas -->
+                        <td class="col-1">{{ item.guarda?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
+                        <td class="col-1 font-medio">{{ item.guarda?.turno || '' }}</td>
+                        <td class="col-3 negrita"> 
+                            <span :class="{resaltado: item.guarda?.personal === 'Sin Cubrir' || 
+                                    item.guarda?.personal === 'Diagrama Cancelado','resaltado-verde': 
+                                    item.guarda?.personal.includes('Ordenado')}">
+                                {{ item.guarda?.personal || '' }}
+                            </span>
+                        </td>
+                        <td class="col-3">{{ buscarServicioPosterior(item.guarda,tren.tren)}}</td>
+                        <td class="col-1">{{ item.guarda?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.observaciones || '' }}</td>
                     </tr>
                 </tbody>
             </table>
             <table
                 v-if="currentTab"
-                class="col-6 table table-striped table-hover"
+                class="col table table-striped table-hover"
             >
                 <thead>
-                    <tr>
+                    <tr class="border-enX border-arriba">
                         <th class="" colspan="1" rowspan="1" style="width: 10px;">R</th>
                         <th class="" colspan="2" rowspan="1">Tren  Sale</th>
                         <th class="" colspan="1" rowspan="1">Origen / Destino</th>
                         <th class="" colspan="2" rowspan="1">Para tren</th>
+                        <th class="" colspan="2" rowspan="1"></th>
+                        <th class="" colspan="2" rowspan="1"></th>
+                    </tr>
+                    <tr class="border-enX">
+                        <th class="" colspan="5" rowspan="1">Conductores</th>
+                        <th class="" colspan="5" rowspan="1">Guardas</th>
+                    </tr>
+                    <tr class="border-enX">
+                        <th class="" colspan="1" rowspan="1">Ref</th>
+                        <th class="" colspan="1" rowspan="1">Turno</th>
+                        <th class="" colspan="1" rowspan="1">Apellido y nombres</th>
+                        <th class="" colspan="1" rowspan="1">LLega con</th>
+                        <th class="" colspan="1" rowspan="1">Observaciones</th>
+
+                        <th class="" colspan="1" rowspan="1">Ref</th>
+                        <th class="" colspan="1" rowspan="1">Turno</th>
+                        <th class="" colspan="1" rowspan="1">Apellido y nombres</th>
+                        <th class="" colspan="1" rowspan="1">LLega con</th>
+                        <th class="" colspan="1" rowspan="1">Observaciones</th>
                     </tr>
                 </thead>
                 <tbody
                 v-for="(tren, index) in sabanaAsc" :key="index"
                 >
-                    <tr class="bg-color" 
+                    <tr class="border-arriba border-enX" 
                         >
                         <td class="col-1" style="width: 10px;">{{ tren.rotacion }}</td>
                         <td class="col-1 negrita font-mayor" colspan="2">{{ tren.tren+' '+ tren.sale }}</td>
@@ -125,7 +165,7 @@
                         <td class="col-1"></td>
                         
                     </tr>
-                    <tr v-for="(item, i) in obtenerDatosMaximos(tren.turnos)" :key="i">
+                    <tr class="border-enX" v-for="(item, i) in obtenerDatosMaximos(tren.turnos)" :key="i">
                         <!-- Conductores -->
                         <td class="col-1" style="width: 10px;">{{ item.conductor?.vueltas.find(vuelta => vuelta.tren === tren.tren)?.refer || '' }}</td>
                         <td class="col-1 font-medio">{{ item.conductor?.turno || '' }}</td>
@@ -155,6 +195,19 @@
                     </tr>
                 </tbody>
             </table>
+            <!-- Botón flotante volver arriba -->
+            <button 
+                @click="scrollToTop" 
+                class="btn-flotante up"
+            >
+                <i class="fa fa-arrow-up" aria-hidden="true"></i>
+            </button>
+            <button 
+                @click="scrollToBottom" 
+                class="btn-flotante down"
+            >
+                <i class="fa fa-arrow-down" aria-hidden="true"></i>
+            </button>
         </main>
     </div>
 </template>
@@ -177,7 +230,7 @@ import { buscarCancelacionDiagrama, buscarPersonalACargo } from "../../utils/per
 export default defineComponent({
     data() {
         return {
-            currentTab: true,
+            currentTab: false,
             itinerarioAsc: [] as Itinerario[],
             itinerarioDes: [] as Itinerario[],
             sabanaAsc: [] as SabanaAscendente[],
@@ -190,7 +243,8 @@ export default defineComponent({
             allItems: [], // Todos los datos cargados
             visibleItems: [], // Elementos que se mostrarán en pantalla
             itemsPerPage: 20, // Cantidad de elementos a cargar por página
-            currentPage: 1, // Página actual
+            currentPageAsc: 1, // Página actual
+            currentPageDes: 1, // Página actual
 
 
             lstTurnos: [] as ITurno[],
@@ -225,19 +279,32 @@ export default defineComponent({
                 guarda: guardas[i] || null,
             }));
         },
-        loadItems() {
-            const start = (this.currentPage - 1) * this.itemsPerPage;
-            const end = this.currentPage * this.itemsPerPage;
+        loadItemsAsc() {
+            const start = (this.currentPageAsc - 1) * this.itemsPerPage;
+            const end = this.currentPageAsc * this.itemsPerPage;
             
             const itinerarioACargar = this.itinerarioAsc.slice(start,end)
-            let sabanaACargar:SabanaAscendente[]=[];
+            let sabanaACargar:SabanaAscendente[] = [];
 
             itinerarioACargar.forEach(itinerario=>{
                 sabanaACargar.push(this.crearItemSabanaAsc(itinerario))
             })
             // this.visibleItems.push(...this.allItems.slice(start, end));
             this.sabanaAsc.push(...sabanaACargar);
-            this.currentPage++;
+            this.currentPageAsc++;
+        },
+        loadItemsDes() {
+            const start = (this.currentPageDes - 1) * this.itemsPerPage;
+            const end = this.currentPageDes * this.itemsPerPage;
+            
+            const itinerarioACargar = this.itinerarioDes.slice(start,end)
+            let sabanaACargar:SabanaDescendente[] = [];
+
+            itinerarioACargar.forEach(itinerario=>{
+                sabanaACargar.push(this.crearItemSabanaDes(itinerario))
+            })
+            this.sabanaDes.push(...sabanaACargar);
+            this.currentPageDes++;
         },
         buscarServicioAnterior(turno:ITurno,tren:string){
             
@@ -249,6 +316,19 @@ export default defineComponent({
                 return vueltaAnterior?.tren ? `${vueltaAnterior?.tren}  ${vueltaAnterior?.llega}` : `${vueltaAnterior?.refer.replace(/ /g, "").toLowerCase()}`;
             }
             return '-';
+        },
+        buscarServicioPosterior(turno:ITurno,tren:string){
+            if ( !turno ) return '-';
+            const vueltaActual = turno?.vueltas?.find(v => v.tren === tren);            
+            if (vueltaActual?.vuelta === turno?.vueltas?.length) return `Deja: ${turno?.deja}`
+            else if (vueltaActual?.vuelta && vueltaActual.vuelta > 1) {
+                // Busca la vuelta Posterior 
+                console.warn("TODO revisar el caso que la siguiente vuelta este disponible. cambiar ternarios por ifs")
+                const vueltaPosterior = turno?.vueltas.find(v => v.vuelta === vueltaActual.vuelta + 1);
+                return vueltaPosterior?.refer.toLowerCase().includes('descanso') ? `Deja: ${turno?.toma}` :
+                vueltaPosterior?.tren === '' ? `${vueltaPosterior?.refer}`:
+                vueltaPosterior?.tren ? `${vueltaPosterior?.tren}  ${vueltaPosterior?.llega}` : `${vueltaPosterior?.refer.replace(/ /g, "").toLowerCase()}`;
+            }
         },
         crearItemSabanaAsc(itinerario:Itinerario):SabanaAscendente{
             console.warn('Provisorio: circular');
@@ -278,6 +358,41 @@ export default defineComponent({
             } 
             return itemSabana
         },
+        crearItemSabanaDes(itinerario:Itinerario):SabanaDescendente{
+            console.warn('Provisorio: circular');
+            const turnosDelTren = filtroTrenes(this.inputIt,this.lstTurnos,['Dic24'],itinerario.tren);
+            buscarPersonalACargo(
+                    this.today,
+                    itinerario.tren,
+                    turnosDelTren,
+                    this.personales,
+                    this.novedades,
+                    this.cambiosTurnos
+                );
+            buscarCancelacionDiagrama(this.ordenamientos,this.today.toISOString().split('T')[0],turnosDelTren,itinerario.tren)
+            
+            const itemSabana:SabanaDescendente = {
+                rotacion:itinerario.rotacion,
+                tren: itinerario.tren,
+                desde: itinerario.estaciones[0],
+                hasta:itinerario.estaciones[itinerario.estaciones.length -1],
+                llega: itinerario.horarios[itinerario.estaciones.length -1],
+                turnos: turnosDelTren
+            } 
+            return itemSabana
+        },
+        scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth" // Desplazamiento suave
+            });
+        },
+        scrollToBottom() {
+            window.scrollTo({
+                top: document.documentElement.scrollHeight,
+                behavior: "smooth" // Desplazamiento suave
+            });
+        },
         handleScroll() {
             const scrollTop = window.scrollY;
             const windowHeight = window.innerHeight;
@@ -287,11 +402,15 @@ export default defineComponent({
             console.log('ho',scrollTop , this.scrollTop);
 
             // Verifica si el usuario está cerca del final del scroll
-            if (scrollTop > this.scrollTop && scrollTop + windowHeight >= documentHeight - 100) {
-                this.loadItems();
-                console.log('hi',scrollTop , this.scrollTop);
+            if ( scrollTop + windowHeight >= documentHeight - 100) {
+                console.log('hii',this.currentTab  );
+                if(this.currentTab){
+                    this.loadItemsAsc();
+                }else{
+                    this.loadItemsDes();
+                }
+                // console.log('hi',scrollTop , this.scrollTop);
                 
-                this.scrollTop = scrollTop;
             }
         },
         separarTrenesPorSentidoYPCOrdenar(){
@@ -348,7 +467,8 @@ export default defineComponent({
 
             
             this.today.setHours(12, 0, 0, 0);
-            this.loadItems()
+            this.loadItemsAsc()
+            this.loadItemsDes()
             newToken();
         } catch (error) {
             console.error(error);
@@ -373,8 +493,12 @@ main {
     justify-content: space-around;
     border-radius: 0.5rem;
 }
-.bg-color{
+.border-arriba{
     border-top: #000 3px solid;
+}
+.border-enX{
+    border-left: 2px solid #000;
+    border-right: 2px solid #000;
 }
 .negrita{
     font-weight: bold;
@@ -400,4 +524,42 @@ main {
     border-radius: 4px; /* Opcional para bordes redondeados */  
     font-weight: bold;
 }
+.table thead th {
+    position: sticky;
+    top: 60px; /* Mantenerlo al principio del contenedor */
+    z-index: 2; /* Asegúrate de que esté encima del contenido */
+    background-color: #ddd; /* Fondo para mayor visibilidad */
+    border-bottom: 1px solid #fff; /* Agregar una línea para separarlos del contenido */
+    border-left: 1px solid #aaa;
+}
+.btn-flotante {
+    position: fixed;
+    z-index: 3; /* Encima de otros elementos */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    padding: 10px 15px;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+}
+.up{
+    bottom: 80px;
+    right: 20px;
+}
+.down{
+    bottom: 20px;
+    right: 20px;
+}
+
+.btn-flotante:hover {
+    font-size: 30px;
+    background-color: #0056b3;
+}
+html, body {
+    overflow-x: hidden; /* Oculta la barra de desplazamiento horizontal */
+}
+
 </style>

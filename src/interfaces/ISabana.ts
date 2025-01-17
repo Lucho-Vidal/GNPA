@@ -6,16 +6,18 @@ export interface SabanaDescendente {
     desde: string,
     hasta: string,
     llega: string,
-    CtTurno: string,
-    CtNombre: string,
-    CtSale: string,
-    CtHora: string,
-    CtObs: string,
-    GdTurno: string,
-    GdNombre: string,
-    GdSale: string,
-    GdHora: string,
-    GdObs: string
+    turnos: Array<ITurno>
+
+    // CtTurno: string,
+    // CtNombre: string,
+    // CtSale: string,
+    // CtHora: string,
+    // CtObs: string,
+    // GdTurno: string,
+    // GdNombre: string,
+    // GdSale: string,
+    // GdHora: string,
+    // GdObs: string
 }
 
 export interface SabanaAscendente {
