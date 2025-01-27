@@ -33,7 +33,7 @@ export function buscarPersonalACargo(
             // resultado[turno.turno] = null;
 
             // Obtiene el personal relacionado con este turno
-            const personal = filtroPersonal(turno.turno, fecha, personales);
+            const personal = filtroPersonal(turno.turno, turno.dotacion, fecha, personales);
 
             if (!personal) {
                 console.warn(`No se encontró personal para el turno: ${turno.turno}`);
@@ -77,12 +77,13 @@ export function buscarPersonalACargo(
 /**
  * Filtra el personal según el turno y la fecha proporcionada.
  *
- * @param turno - El turno que se desea buscar. Puede tener formato 'diag.diaLab' o ser un turno directo.
+ * @param turno - El nombre del turno que se desea buscar. Puede tener formato 'diag.diaLab' o ser un turno directo.
+ * @param dotacion - la dotacion del turno que se busca
  * @param fecha - La fecha que se utilizará para calcular el franco del personal.
  * @param personales - La lista de personal en la que se buscará.
  * @returns Un objeto con el turno, el legajo del personal encontrado, y una cadena con el nombre y apellido del personal (y su ayudante si existe).
  */
-export function filtroPersonal(turno: string, fecha: Date, personales: IPersonal[]) {
+export function filtroPersonal(turno: string,dotacion:string, fecha: Date, personales: IPersonal[]) {
     turno = turno.trim().toLowerCase();
     
     let titular: IPersonal[] = [];
@@ -90,7 +91,7 @@ export function filtroPersonal(turno: string, fecha: Date, personales: IPersonal
     if (turno.includes("prog")) {
         // Filtra personal en turno "prog"
         titular = personales.filter(
-            (personal) => personal.turno && personal.turno.toLowerCase().includes("prog")
+            (personal) => personal.turno && personal.turno.toLowerCase().includes("prog") && personal.dotacion === dotacion
         );
     } else if (turno.indexOf(".") !== -1) {
         const [diag, diaLabStr] = turno.split(".");
@@ -104,15 +105,15 @@ export function filtroPersonal(turno: string, fecha: Date, personales: IPersonal
         const franco = dia_laboral(diaLab, fecha.getDay());
 
         titular = personales.filter(
-            (personal) => personal.turno === diag && Number(personal.franco) === franco
+            (personal) => personal.turno === diag && Number(personal.franco) === franco && personal.dotacion === dotacion
         );
     } else {
         // Turnos directos sin punto ni 'prog'
         titular = personales.filter(
-            (personal) => personal.turno && personal.turno.toLowerCase() === turno
+            (personal) => personal.turno && personal.turno.toLowerCase() === turno && personal.dotacion === dotacion
         );
     }
-
+    
     if (titular.length === 0) {
         return { turno, legajo: 0, nombres: "" };
     }

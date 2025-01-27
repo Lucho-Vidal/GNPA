@@ -1,5 +1,15 @@
 import Registro from "../models/Registro.js"
 
+export const obtenerRegistro = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Registro.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getRegistros = async (req,res) => {
     try{
         const registros = await Registro.find();

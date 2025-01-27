@@ -1,5 +1,15 @@
 import CambioTurno from "../models/cambioTurno";
 
+export const obtenerCambioTurno = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await CambioTurno.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getCambioTurnos = async (req, res) => {
     try {
         // Recupera todas las novedades de la base de datos

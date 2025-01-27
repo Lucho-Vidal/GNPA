@@ -1,6 +1,16 @@
 import mongoose from "mongoose";
 import Itinerario from "../models/Itinerario";
 
+export const obtenerItinerario = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Itinerario.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getItinerarios = async (req, res) => {
     const itinerario = await Itinerario.find();
     res.json(itinerario);

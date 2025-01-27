@@ -1,5 +1,17 @@
 import Novedades from "../models/Novedades";
 
+export const obtenerNovedades = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        const novedades = await Novedades.find();
+        return novedades;
+    } catch (error) {
+        console.error("Error al obtener novedades:", error);
+        throw new Error("No se pudieron obtener las novedades");
+    }
+};
+
+
 export const getNovedades = async (req, res) => {
     try {
         // Recupera todas las novedades de la base de datos

@@ -149,7 +149,7 @@
                                 <input
                                     class="form-control mb-3"
                                     placeholder=""
-                                    type="number"
+                                    type="text"
                                     name="tren"
                                     v-model="vuelta.tren"
                                 />

@@ -4,6 +4,36 @@ import mongoose from 'mongoose';
 const { ObjectId } = mongoose.Types;
 import Vias from "../models/Vias";
 
+export const obtenerPersonal = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Personal.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
+export const obtenerDatos_Personales = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Datos_Personale.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
+export const obtenerVias = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Vias.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getPersonales = async (req, res) => {
     try {
         // Obtener todos los registros de la colección Personal

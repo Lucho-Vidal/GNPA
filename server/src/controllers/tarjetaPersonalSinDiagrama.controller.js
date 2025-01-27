@@ -1,6 +1,16 @@
 import Tarjeta from "../models/tarjetaPersonalSinDiagrama";
 import mongoose from 'mongoose';
 
+export const obtenerTarjetas = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Tarjeta.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getTarjetaPersonalesSinDiagrama = async (req, res) => {
     try {
         // Obtener todos los registros de la colección Personal

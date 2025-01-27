@@ -1,6 +1,16 @@
 import CambioTurno from "../models/cambioTurno";
 import Ordenamiento from "../models/Ordenamiento";
 
+export const obtenerOrdenamiento = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Ordenamiento.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getOrdenamientos = async (req, res) => {
     try {
         // Recupera todas las novedades de la base de datos

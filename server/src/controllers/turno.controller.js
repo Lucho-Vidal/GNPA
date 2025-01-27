@@ -1,6 +1,17 @@
 import mongoose from "mongoose";
 import Turno from "../models/Turno";
 
+
+export const obtenerTurno = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Turno.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getTurnos = async (req, res) => {
     try {
         const turnos = await Turno.find();

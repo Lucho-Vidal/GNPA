@@ -1,6 +1,16 @@
 import Personal from "../models/personalSinDiagrama";
 import mongoose from 'mongoose';
 
+export const obtenerPersonalSinDiagrama = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await Personal.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getPersonalesSinDiagrama = async (req, res) => {
     try {
         // Obtener todos los registros de la colección Personal

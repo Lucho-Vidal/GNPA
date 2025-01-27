@@ -17,7 +17,7 @@ import usersRoutes from "./routers/user.routes";
 import registrosRoutes from "./routers/registro.routes";
 import cambioTurnoRoutes from "./routers/cambioTurno.routes";
 import ordenamientoRoutes from "./routers/ordenamientos.routes";
-
+import { callBackup } from "./createBackup";
 
 const app = express();
 createRoles();
@@ -40,6 +40,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+callBackup("D:/backup")
+// callBackup("") agregar compartidas PCT
 
 app.use("/api", personales);
 app.use("/api", personalSinDiagrama);
@@ -55,7 +57,7 @@ app.use("/api", cambioTurnoRoutes);
 app.use("/api", ordenamientoRoutes);
 
 
-app.use(express.static(path.join(__dirname,"..","..","dist")));
+app.use(express.static(path.join(__dirname,"..","..","dist"),{extensions:["html","css","js"]}));
 app.use('/uploads', express.static(path.join(__dirname,"..", 'uploads')));
 console.log(__dirname);
 

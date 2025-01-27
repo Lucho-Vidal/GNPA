@@ -1,6 +1,16 @@
 import User from "../models/User";
 import Role from "../models/Role";
 
+export const obtenerUser = async () => {
+    try {
+        // Recupera todas las novedades de la base de datos
+        return  await User.find();
+    } catch (error) {
+        console.error("Error al obtener datos:", error);
+        throw new Error("No se pudieron obtener los datos");
+    }
+};
+
 export const getUsers = async (req, res) => {
     try {
         // Utiliza proyección para excluir la contraseña
