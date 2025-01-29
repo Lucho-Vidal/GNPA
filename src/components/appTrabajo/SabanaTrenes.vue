@@ -43,7 +43,7 @@
 
             <table
                 v-if="!currentTab"
-                class="col table table-striped table-hover"
+                class="col mi-tabla-especifica table-striped table-hover"
             >
                 <thead >
                     <tr class="border-enX border-arriba">
@@ -60,13 +60,13 @@
                         <th class="" colspan="1" rowspan="1">Ref</th>
                         <th class="" colspan="1" rowspan="1">Turno</th>
                         <th class="" colspan="1" rowspan="1">Apellido y nombres</th>
-                        <th class="" colspan="1" rowspan="1">LLega con</th>
+                        <th class="" colspan="1" rowspan="1">Sigue con</th>
                         <th class="" colspan="1" rowspan="1">Observaciones</th>
 
                         <th class="" colspan="1" rowspan="1">Ref</th>
                         <th class="" colspan="1" rowspan="1">Turno</th>
                         <th class="" colspan="1" rowspan="1">Apellido y nombres</th>
-                        <th class="" colspan="1" rowspan="1">LLega con</th>
+                        <th class="" colspan="1" rowspan="1">Sigue con</th>
                         <th class="" colspan="1" rowspan="1">Observaciones</th>
                     </tr>
                 </thead>
@@ -116,7 +116,7 @@
             </table>
             <table
                 v-if="currentTab"
-                class="col table table-striped table-hover"
+                class="col mi-tabla-especifica table-striped table-hover"
             >
                 <thead>
                     <tr class="border-enX border-arriba">
@@ -524,7 +524,8 @@ main {
     border-radius: 4px; /* Opcional para bordes redondeados */  
     font-weight: bold;
 }
-.table thead th {
+.mi-tabla-especifica thead th {
+    padding: 0.5rem;
     position: sticky;
     top: 60px; /* Mantenerlo al principio del contenedor */
     z-index: 2; /* Asegúrate de que esté encima del contenido */

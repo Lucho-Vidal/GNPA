@@ -4,7 +4,7 @@
         <router-link class="navbar-brand mx-4" to="/" >GNPA - Trenes Argentinos</router-link>
         <!-- Sidebar Toggle-->
         <!-- <a @click="toggleSidebar" id="sidebarToggle" class="material-icons">list</a> -->
-        <button v-if="login" class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" @click="toggleAsideBar"><i class="fas fa-bars"></i></button>
+        <!-- <button v-if="login" class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" @click="toggleAsideBar"><i class="fas fa-bars"></i></button> -->
         <!-- Navbar username-->
         <span  v-if="login" class="ms-auto me-0 me-md-3 my-2 my-md-0" style="color: white;">{{ username }}</span>
 
@@ -21,6 +21,7 @@
             </li>
         </ul>
     </nav>
+    
     
 </template>
 
@@ -129,7 +130,6 @@ export default defineComponent({
 }
 #layoutSidenav{
     position: relative;
-    z-index:1;
 }
 </style>
 

@@ -4,7 +4,7 @@
         <asideBar :isAsideBarVisible="isAsideBarVisible" />
         <!-- <router-view class="router-view"/> -->
     <router-view id="layoutSidenav_content"
-            class="router-view"
+            class="router-view zIndex"
             :class="[
                 isAsideBarVisible
                     ? 'layoutSidenav_content-width-max'
@@ -24,6 +24,7 @@ import NavBar from "./components/NavBar.vue";
 import asideBar from "./components/asideBar.vue";
 import FooterPage from "./components/FooterPage.vue";
 import  "./styles.css"
+// import  "./styles copy.css"
 
 export default defineComponent({
     name: "App",
@@ -50,5 +51,10 @@ export default defineComponent({
 </script>
 
 <style>
-    
+    asideBar{
+        z-index: 0;
+    }
+    .zIndex{
+        z-index: 3;
+    }
 </style>

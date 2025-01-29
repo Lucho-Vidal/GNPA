@@ -105,7 +105,7 @@
                         <td colspan="2" class="w-10">
                             <span
                                 :class="{
-                                    resaltado: ind.personal === 'Sin Cubrir' || ind.personal === 'Diagrama Cancelado',
+                                    resaltado: ind.personal.includes('Sin Cubrir') || ind.personal.includes('Diagrama Cancelado'),
                                     'resaltado-verde': ind.personal.includes('Ordenado')
                                 }"
                             >
@@ -124,7 +124,7 @@
             >
                 <h4 class="Personal col-1">{{ t.turno }}</h4>
                 <h4 class="col-4" :class="{
-                                    resaltado: t.personal === 'Sin Cubrir' || t.personal === 'Diagrama Cancelado',
+                                    resaltado: t.personal.includes('Sin Cubrir')  || t.personal.includes('Diagrama Cancelado'),
                                     'resaltado-verde': t.personal.includes('Ordenado')
                                 }">{{ t.personal }}</h4>
                 <h5 class="col-2">{{ "<<" + t.circular + ">>" }}</h5>
@@ -219,9 +219,11 @@ export default defineComponent({
             //limpio variables globales
             this.horarios = {} as Itinerario;
             this.turnosAImprimir = [];
-
+                
             const fecha: Date = this.obtenerFecha(this.inputDate, this.today);
-            const itinerario: string = itinerarioType(fecha);
+            this.inputIt = this.inputIt ? this.inputIt : itinerarioType(fecha);
+            
+            const itinerario: string = this.inputIt
 
             if (this.tren !== "") {
                 // Define un objeto de prioridad para las especialidades
@@ -352,5 +354,8 @@ body {
     padding: 5px; /* Opcional para agregar espaciado */
     border-radius: 4px; /* Opcional para bordes redondeados */  
     font-weight: bold;
+}
+html, body {
+    overflow-x: hidden; /* Oculta la barra de desplazamiento horizontal */
 }
 </style>

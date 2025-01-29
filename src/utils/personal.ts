@@ -58,13 +58,25 @@ export function buscarPersonalACargo(
                         resultado[turno.turno] = novedad;
                     }
                 }
+                if (personal.legajoAyudante !== 0 &&  legajo === personal.legajoAyudante && tieneNovedadActiva) {
+                    // Si el personal está sin cubrir, asocia la novedad al turno
+                    personal.nombresAyudante = obtenerNombreConReemplazo(novedad, inputDate, cambiosTurnos);
+                    console.log(personal.nombresAyudante)
+                    if (personal.nombresAyudante === "Sin Cubrir") {
+                        resultado[turno.turno] = novedad;
+                    }
+                }
             });
-
             // Maneja cambios de turno si es necesario
             const cambiado = buscarCambioTurno(cambiosTurnos, inputDate, personal.legajo);
-            turno.personal = cambiado
-                ? `${cambiado.apellido} ${cambiado.nombres}`
-                : personal.nombres;
+            turno.personal = cambiado ? `${cambiado.apellido} ${cambiado.nombres}` : personal.nombres;
+
+            if (personal.legajoAyudante !== 0){
+                const cambiadoAyudante = buscarCambioTurno(cambiosTurnos, inputDate, personal.legajoAyudante);
+                personal.nombresAyudante  = cambiadoAyudante ? `${cambiadoAyudante?.apellido} ${cambiadoAyudante?.nombres}`: personal.nombresAyudante;
+
+                turno.personal = `${personal.nombres} - Ayudante: ${personal.nombresAyudante}`
+            }
         });
 
         return resultado;
@@ -83,23 +95,28 @@ export function buscarPersonalACargo(
  * @param personales - La lista de personal en la que se buscará.
  * @returns Un objeto con el turno, el legajo del personal encontrado, y una cadena con el nombre y apellido del personal (y su ayudante si existe).
  */
-export function filtroPersonal(turno: string,dotacion:string, fecha: Date, personales: IPersonal[]) {
+export function filtroPersonal(turno: string,dotacion:string, fecha: Date, personales: IPersonal[]):{
+    turno: string,
+    legajo: number,
+    nombres: string,
+    legajoAyudante: number,
+    nombresAyudante: string} {
     turno = turno.trim().toLowerCase();
     
     let titular: IPersonal[] = [];
     
     if (turno.includes("prog")) {
         // Filtra personal en turno "prog"
-        titular = personales.filter(
-            (personal) => personal.turno && personal.turno.toLowerCase().includes("prog") && personal.dotacion === dotacion
-        );
+        titular = personales.filter((personal) => {
+            return personal.turno.toLowerCase() === turno  && personal.turno.toLowerCase().includes("prog") && personal.dotacion === dotacion
+        });
     } else if (turno.indexOf(".") !== -1) {
         const [diag, diaLabStr] = turno.split(".");
         const diaLab = Number(diaLabStr);
         
         if (isNaN(diaLab)) {
             console.error(`El valor después del punto no es un número válido: ${turno}`);
-            return { turno, legajo: 0, nombres: "" };
+            return { turno, legajo: 0, nombres: "", legajoAyudante: 0, nombresAyudante: "" };
         }
 
         const franco = dia_laboral(diaLab, fecha.getDay());
@@ -115,7 +132,7 @@ export function filtroPersonal(turno: string,dotacion:string, fecha: Date, perso
     }
     
     if (titular.length === 0) {
-        return { turno, legajo: 0, nombres: "" };
+        return { turno, legajo: 0, nombres: "",legajoAyudante: 0, nombresAyudante: "" };
     }
 
     const [titularPrincipal, titularAyudante] = titular;
@@ -123,9 +140,9 @@ export function filtroPersonal(turno: string,dotacion:string, fecha: Date, perso
     return {
         turno,
         legajo: titularPrincipal.legajo,
-        nombres: titularAyudante
-            ? `${titularPrincipal.apellido} ${titularPrincipal.nombres} - Ayudante: ${titularAyudante.apellido} ${titularAyudante.nombres}`
-            : `${titularPrincipal.apellido} ${titularPrincipal.nombres}`
+        nombres: `${titularPrincipal.apellido} ${titularPrincipal.nombres} `,
+        legajoAyudante: titularAyudante ? titularAyudante.legajo : 0,
+        nombresAyudante: titularAyudante ? `${titularAyudante.apellido} ${titularAyudante.nombres}` : '-'
     };
 }
 /**

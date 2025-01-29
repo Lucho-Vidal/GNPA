@@ -693,11 +693,14 @@ export default defineComponent({
     data() {
         return {
             legajoPersonal: 0 as number,
+
             personales: [] as IPersonal[],
+
             personal: defaultPersonal() as IPersonal,
             datoPersonal: {} as IDatoPersonal,
             conocimientoVia: {} as IConocimientosVias,
             personalSinDiagrama: {} as IPersonalSinDiagrama,
+
             days: [
                 "Domingo",
                 "Lunes",
@@ -732,13 +735,16 @@ export default defineComponent({
                     await createPersonal(this.personal)
                     accion = "Creo"
                 }
+                console.log(this.Personal); 
+                console.log(this.datoPersonal); 
+                console.log(this.conocimientoVia); 
+                console.log(this.personalSinDiagrama); 
 
                 this.datoPersonal._id ?
                 await updateDatoPersonal(this.datoPersonal._id, this.datoPersonal):
                 await createDatoPersonal(this.datoPersonal)
 
-                if(this.personal.especialidad.includes("Conductor")||
-                this.personal.especialidad.includes("Ayudante")){
+                if(this.personal.especialidad.includes("Conductor") || this.personal.especialidad.includes("Ayudante")){
                     this.conocimientoVia._id ?
                     await updateConocimientoVia(this.conocimientoVia._id, this.conocimientoVia):
                     await createConocimientoVia(this.conocimientoVia)
@@ -756,7 +762,7 @@ export default defineComponent({
                     fecha: this.today.toString(),
                     accion: accion,
                     personal: this.personal,
-                    conocimientoVia: this.conocimientoVia,
+                    conocimientoVia: this.conocimientoVia ? this.conocimientoVia : "",
                     datoPersonal: this.datoPersonal
                 };
                 await createRegistro(registro);
@@ -828,6 +834,7 @@ export default defineComponent({
         },
         async loadDatoPersonal(id: string) {
             try {
+                if(!id) return
                 const res = await getDatoPersonal(id);
                 this.datoPersonal = res.data;
             } catch (error) {
@@ -836,6 +843,7 @@ export default defineComponent({
         },
         async loadConocimientoVia(id: string) {
             try {
+                if(!id) return
                 const res = await getConocimientoVia(id);
                 this.conocimientoVia = res.data;
             } catch (error) {
@@ -844,6 +852,7 @@ export default defineComponent({
         },
         async loadPersonalSinDiagrama(id: string) {
             try {
+                if(!id) return
                 const res = await getPersonalSinDiagrama(id);
                 this.personalSinDiagrama = res.data;                
             } catch (error) {

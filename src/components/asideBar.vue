@@ -296,7 +296,7 @@
 import { defineComponent } from "vue";
 import { getRoles } from "../services/signService";
 // import "@/assets/styles.css";
-
+// isAsideBarVisible
 export default defineComponent({
     name: "asideBar",
     data() {
@@ -356,7 +356,7 @@ export default defineComponent({
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 2;
+    z-index: 0;
     width: 25vw;
 }
 .sb-sidenav-menu::-webkit-scrollbar{
